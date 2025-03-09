@@ -12,10 +12,10 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
-# from modules.util import path_util
-# from modules.util.config.BaseConfig import BaseConfig
-# from modules.util.config.TrainConfig import TrainConfig
-# from modules.util.ui.UIState import UIState
+from modules.util import path_util
+from modules.util.config.BaseConfig import BaseConfig
+from modules.util.config.TrainConfig import TrainConfig
+from modules.util.ui.UIState import UIState
 
 
 class ConfigList(ABC):
@@ -27,8 +27,8 @@ class ConfigList(ABC):
     def __init__(
         self,
         master: QWidget,
-        train_config,  # type: TrainConfig
-        ui_state,      # type: UIState
+        train_config: TrainConfig,
+        ui_state: UIState,
         from_external_file: bool,
         attr_name: str = "",
         config_dir: str = "",
@@ -58,14 +58,11 @@ class ConfigList(ABC):
         self.default_config_name = default_config_name
         self.is_full_width = is_full_width
 
-        # The top-level layout for 'master'.
-        # If 'master' does not yet have a layout, create one:
         if not master.layout():
             self.master_layout = QVBoxLayout(master)
             self.master_layout.setContentsMargins(0, 0, 0, 0)
             master.setLayout(self.master_layout)
         else:
-            # If there's already a layout, we can just use it
             self.master_layout = master.layout()
 
         # A top "frame" (QFrame) for controls

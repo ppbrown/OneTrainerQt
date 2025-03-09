@@ -1,13 +1,22 @@
-from modules.ui.ConfigList import ConfigList
+# scheduler_params_window.py
+
+from PySide6.QtWidgets import (
+    QDialog, QGridLayout, QFrame, QPushButton
+)
+from PySide6.QtCore import Qt
+
+from modules.ui.ConfigList import ConfigList  # PySide6 version
 from modules.util.config.TrainConfig import TrainConfig
 from modules.util.enum.LearningRateScheduler import LearningRateScheduler
 from modules.util.ui import components
 from modules.util.ui.UIState import UIState
 
-import customtkinter as ctk
-
 
 class KvParams(ConfigList):
+    """
+    PySide6 translation of your ctk-based KvParams.
+    Inherits from ConfigList, referencing train_config.scheduler_params.
+    """
     def __init__(self, master, train_config: TrainConfig, ui_state: UIState):
         super().__init__(
             master,
@@ -32,83 +41,112 @@ class KvParams(ConfigList):
         pass
 
 
-class KvWidget(ctk.CTkFrame):
+class KvWidget(QFrame):
+    """
+    PySide6 version of your ctk.CTkFrame-based KvWidget.
+    """
     def __init__(self, master, element, i, open_command, remove_command, clone_command, save_command):
-        super().__init__(master=master, bg_color="transparent")
+        super().__init__(master)
         self.element = element
         self.ui_state = UIState(self, element)
         self.i = i
         self.save_command = save_command
 
-        self.grid_columnconfigure(0, weight=0)
-        self.grid_columnconfigure(1, weight=1, uniform=1)
-        self.grid_columnconfigure(2, weight=1, uniform=1)
+        self.layout = QGridLayout(self)
+        self.layout.setContentsMargins(0,0,0,0)
+        self.layout.setSpacing(5)
+        self.setLayout(self.layout)
 
-        close_button = ctk.CTkButton(
-            master=self,
-            width=20,
-            height=20,
-            text="X",
-            corner_radius=2,
-            fg_color="#C00000",
-            command=lambda: remove_command(self.i))
-        close_button.grid(row=0, column=0)
-
+        # "X" close button
+        close_button = components.button(self, 0, 0, "X",
+                                         command=lambda: remove_command(self.i),
+                                         tooltip="Remove this parameter")
         # Key
         tooltip_key = "Key name for an argument in your scheduler"
-        self.key = components.entry(self, 0, 1, self.ui_state, "key",
-                                    tooltip=tooltip_key, wide_tooltip=True)
-        self.key.bind("<FocusOut>", lambda _: save_command())
-        self.key.configure(width=50)
+        self.key_entry = components.entry(
+            self, 0, 1,
+            self.ui_state, "key",
+            tooltip=tooltip_key,
+            wide_tooltip=True
+        )
+        self.key_entry.bind("<FocusOut>", lambda _: self.save_command())
+        self.key_entry.configure(width=50)
 
         # Value
-        tooltip_val = "Value for an argument in your scheduler. Some special values can be used, wrapped in percent signs: LR, EPOCHS, STEPS_PER_EPOCH, TOTAL_STEPS, SCHEDULER_STEPS. Note that OneTrainer calls step() after every individual learning step, not every epoch, so what Torch calls 'epoch' you should treat as 'step'."
-        self.value = components.entry(self, 0, 2, self.ui_state, "value",
-                                      tooltip=tooltip_val, wide_tooltip=True)
-        self.value.bind("<FocusOut>", lambda _: save_command())
-        self.value.configure(width=50)
+        tooltip_val = (
+            "Value for an argument in your scheduler. Some special values can be used, wrapped in percent signs: "
+            "LR, EPOCHS, STEPS_PER_EPOCH, TOTAL_STEPS, SCHEDULER_STEPS."
+        )
+        self.value_entry = components.entry(
+            self, 0, 2,
+            self.ui_state, "value",
+            tooltip=tooltip_val,
+            wide_tooltip=True
+        )
+        self.value_entry.bind("<FocusOut>", lambda _: self.save_command())
+        self.value_entry.configure(width=50)
 
     def place_in_list(self):
-        self.grid(row=self.i, column=0, padx=5, pady=5, sticky="new")
+        self.layout.setRowMinimumHeight(self.i, 30)
+        self.layout.setRowStretch(self.i, 0)
+        self.layout.setColumnStretch(2, 1)
+        self.grid_layout_parent = self.parentWidget().layout()
+        if self.grid_layout_parent:
+            self.grid_layout_parent.addWidget(self, self.i, 0, 1, 1)
 
 
-class SchedulerParamsWindow(ctk.CTkToplevel):
+class SchedulerParamsWindow(QDialog):
+    """
+    PySide6 translation of your ctk.CTkToplevel-based SchedulerParamsWindow.
+    """
     def __init__(self, parent, train_config: TrainConfig, ui_state, *args, **kwargs):
-        ctk.CTkToplevel.__init__(self, parent, *args, **kwargs)
+        super().__init__(parent, *args, **kwargs)
 
         self.parent = parent
         self.train_config = train_config
         self.ui_state = ui_state
 
-        self.title("Learning Rate Scheduler Settings")
-        self.geometry("800x400")
-        self.resizable(True, True)
-        self.wait_visibility()
-        self.grab_set()
-        self.focus_set()
+        self.setWindowTitle("Learning Rate Scheduler Settings")
+        self.resize(800, 400)
+        self.setModal(False)
 
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_rowconfigure(1, weight=0)
-        self.grid_columnconfigure(0, weight=1)
+        main_layout = QGridLayout(self)
+        main_layout.setContentsMargins(5,5,5,5)
+        main_layout.setSpacing(5)
+        self.setLayout(main_layout)
 
-        self.frame = ctk.CTkFrame(self)
-        self.frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
-        self.frame.grid_columnconfigure(0, weight=0)
-        self.frame.grid_columnconfigure(1, weight=1)
-        self.expand_frame = ctk.CTkFrame(self.frame, bg_color="transparent")
-        self.expand_frame.grid(row=1, column=0, columnspan=2, sticky="nsew")
+        self.frame = QFrame(self)
+        self.frame_layout = QGridLayout(self.frame)
+        self.frame_layout.setContentsMargins(5,5,5,5)
+        self.frame_layout.setSpacing(5)
+        self.frame.setLayout(self.frame_layout)
+        main_layout.addWidget(self.frame, 0, 0, 1, 1)
 
-        components.button(self, 1, 0, "ok", command=self.on_window_close)
+        # "ok" button
+        self.ok_button = components.button(self, 1, 0, "ok", self.on_window_close)
+        main_layout.addWidget(self.ok_button, 1, 0, alignment=Qt.AlignRight)
+
+        # columns
+        self.frame_layout.setColumnStretch(0, 0)
+        self.frame_layout.setColumnStretch(1, 1)
+
+        self.expand_frame = QFrame(self.frame)
+        self.expand_frame_layout = QGridLayout(self.expand_frame)
+        self.expand_frame_layout.setContentsMargins(0,0,0,0)
+        self.expand_frame_layout.setSpacing(5)
+        self.expand_frame.setLayout(self.expand_frame_layout)
+        self.frame_layout.addWidget(self.expand_frame, 1, 0, 1, 2)
+
         self.main_frame(self.frame)
 
-    def main_frame(self, master):
-        if self.train_config.learning_rate_scheduler is LearningRateScheduler.CUSTOM:
+    def main_frame(self, master: QFrame):
+        if self.train_config.learning_rate_scheduler == LearningRateScheduler.CUSTOM:
             components.label(master, 0, 0, "Class Name",
-                             tooltip="Python class module and name for the custom scheduler class, in the form of <module>.<class_name>.")
+                             tooltip="Python class module and name for the custom scheduler class.")
             components.entry(master, 0, 1, self.ui_state, "custom_learning_rate_scheduler")
 
-        # Any additional parameters, in key-value form.
+        # key-value params
         self.params = KvParams(self.expand_frame, self.train_config, self.ui_state)
 
     def on_window_close(self):
-        self.destroy()
+        self.close()

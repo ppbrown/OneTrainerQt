@@ -3,6 +3,9 @@ import platform
 import subprocess
 import traceback
 
+# pyside conversion note:
+# remember to come back and use QListWidget or something similar
+
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QLabel, QPushButton, QCheckBox, QLineEdit,
     QVBoxLayout, QHBoxLayout, QGridLayout, QScrollArea, QFileDialog,
@@ -11,7 +14,6 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QPoint, QRect, QSize
 from PySide6.QtGui import QPixmap, QImage, QMouseEvent, QAction, QKeyEvent
 
-# If you have your own modules, import them here:
 from modules.module.Blip2Model import Blip2Model
 from modules.module.BlipModel import BlipModel
 from modules.module.ClipSegModel import ClipSegModel

@@ -1,56 +1,100 @@
-import customtkinter as ctk
+# tool_tip.py
+
+"""
+Thoughts from ppbrown:
+Should probably examine all places where this is used, and where possible,
+use built-in pyside tooltip support instead
+"""
+
+import sys
+from typing import Optional
+from PySide6.QtWidgets import (
+    QWidget, QLabel, QVBoxLayout, QDialog, QGridLayout, QApplication
+)
+from PySide6.QtCore import (
+    QObject, QTimer, QPoint, Qt, QEvent
+)
 
 
-class ToolTip:
+class ToolTip(QObject):
     """
-    create a tooltip for a given widget
+    A PySide6 replacement for the customtkinter-based ToolTip.
+    Binds to a widget, shows a small popup QDialog with text on hover
+    after a delay. Dismisses on leave or button press.
     """
 
-    def __init__(self, widget, text='widget info', x_position=20, wide=False):
+    def __init__(
+        self,
+        widget: QWidget,
+        text: str = "widget info",
+        x_position: int = 20,
+        wide: bool = False
+    ):
+        super().__init__(widget)
         self.widget = widget
         self.text = text
         self.x_position = x_position
+        self.waittime = 500  # ms
+        self.wraplength = 350 if wide else 180
+        self._timer = QTimer(self)
+        self._timer.setSingleShot(True)
+        self._timer.timeout.connect(self._show_tip)
 
-        self.waittime = 500  # miliseconds
-        self.wraplength = 180 if not wide else 350 # pixels
-        self.widget.bind("<Enter>", self.enter)
-        self.widget.bind("<Leave>", self.leave)
-        self.widget.bind("<ButtonPress>", self.leave)
-        self.id = None
-        self.tw = None
+        self._tooltip_dialog: Optional[QDialog] = None
 
-    def enter(self, event=None):
-        self.schedule()
+        widget.installEventFilter(self)
 
-    def leave(self, event=None):
-        self.unschedule()
-        self.hidetip()
+    def eventFilter(self, obj: QObject, event: QEvent) -> bool:
+        if obj == self.widget:
+            if event.type() == QEvent.Enter:
+                self._schedule()
+            elif event.type() == QEvent.Leave:
+                self._unschedule()
+                self._hide_tip()
+            elif event.type() == QEvent.MouseButtonPress:
+                # also hide on button press
+                self._unschedule()
+                self._hide_tip()
+        return super().eventFilter(obj, event)
 
-    def schedule(self):
-        self.unschedule()
-        self.id = self.widget.after(self.waittime, self.showtip)
+    def _schedule(self):
+        self._unschedule()
+        self._timer.start(self.waittime)
 
-    def unschedule(self):
-        id = self.id
-        self.id = None
-        if id:
-            self.widget.after_cancel(id)
+    def _unschedule(self):
+        if self._timer.isActive():
+            self._timer.stop()
 
-    def showtip(self, event=None):
-        x = y = 0
-        x, y, cx, cy = self.widget.bbox("insert")
-        x += self.widget.winfo_rootx() + 25
-        y += self.widget.winfo_rooty() + self.x_position
-        # creates a toplevel window
-        self.tw = ctk.CTkToplevel(self.widget)
-        # Leaves only the label and removes the app window
-        self.tw.wm_overrideredirect(True)
-        self.tw.wm_geometry(f"+{x}+{y}")
-        label = ctk.CTkLabel(self.tw, text=self.text, justify='left', wraplength=self.wraplength)
-        label.pack(padx=8, pady=8)
+    def _show_tip(self):
+        if self._tooltip_dialog is not None:
+            return  # already shown
 
-    def hidetip(self):
-        tw = self.tw
-        self.tw = None
-        if tw:
-            tw.destroy()
+        # Position near the widget
+        global_pos = self.widget.mapToGlobal(QPoint(25, self.x_position))
+
+        self._tooltip_dialog = QDialog(self.widget, flags=(
+            Qt.ToolTip | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
+        ))
+        self._tooltip_dialog.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self._tooltip_dialog.setObjectName("tooltipDialog")
+        self._tooltip_dialog.setStyleSheet("""
+        QDialog#tooltipDialog {
+            background-color: #FFFFE0;
+            border: 1px solid #A0A0A0;
+        }
+        """)
+        layout = QVBoxLayout(self._tooltip_dialog)
+        layout.setContentsMargins(8, 8, 8, 8)
+        label = QLabel(self.text, self._tooltip_dialog)
+        label.setWordWrap(True)
+        label.setMaximumWidth(self.wraplength)
+        layout.addWidget(label)
+        self._tooltip_dialog.adjustSize()
+
+        self._tooltip_dialog.move(global_pos)
+        self._tooltip_dialog.show()
+
+    def _hide_tip(self):
+        if self._tooltip_dialog:
+            self._tooltip_dialog.close()
+            self._tooltip_dialog = None
