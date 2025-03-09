@@ -126,7 +126,7 @@ class CaptionUI(QMainWindow):
         self.file_list_scroll_area.setWidget(self.file_list_container)
         self.bottom_layout.addWidget(self.file_list_scroll_area, 0)
 
-        # Right column: main content (image, mask, prompt)
+        # Center content (image, mask, caption)
         self.content_widget = QWidget()
         self.content_layout = QGridLayout(self.content_widget)
         self.bottom_layout.addWidget(self.content_widget, 1)
@@ -141,10 +141,6 @@ class CaptionUI(QMainWindow):
     # Top bar
     # -----------------------------------------------------------------------
     def setup_top_bar(self):
-        """
-        Replace your "components.button()" calls with simple QPushButtons.
-        For toggles/switches, use QCheckBox, etc.
-        """
         open_button = QPushButton("Open")
         open_button.setToolTip("Open a new directory")
         open_button.clicked.connect(self.open_directory)
@@ -215,12 +211,11 @@ class CaptionUI(QMainWindow):
         self.file_list_layout.addStretch(1)
 
     # -----------------------------------------------------------------------
-    # Content column (right side)
+    # Content column (center areas)
     # -----------------------------------------------------------------------
     def setup_content_column(self):
         """
         This sets up the image area, mask editing controls, prompt entry, etc.
-        We'll use a QGridLayout for a rough approximation of your layout.
         """
         # -- Row 0: top row of buttons/checkbox to set mask mode --
         draw_button = QPushButton("Draw")
@@ -672,9 +667,6 @@ class CaptionUI(QMainWindow):
         except Exception:
             traceback.print_exc()
 
-    # -----------------------------------------------------------------------
-    # Model loading (unchanged, except no references to a Tk UI var)
-    # -----------------------------------------------------------------------
     def load_masking_model(self, model):
         self.captioning_model = None
 
