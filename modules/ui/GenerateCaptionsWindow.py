@@ -10,13 +10,13 @@ Replace references to self.parent with signals/slots or direct method calls as n
 
 import os
 from PySide6.QtWidgets import (
-    QDialog, QLabel, QLineEdit, QComboBox,
+    QMainWindow, QLabel, QLineEdit, QComboBox,
     QPushButton, QCheckBox, QProgressBar,
     QFileDialog, QGridLayout, QVBoxLayout
 )
 from PySide6.QtCore import Qt
 
-class GenerateCaptionsWindow(QDialog):
+class GenerateCaptionsWindow(QMainWindow):
     """
     Window for generating captions for a folder of images.
     Replaces the customtkinter-based class with a QDialog using PySide6.
