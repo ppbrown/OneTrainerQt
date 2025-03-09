@@ -62,7 +62,8 @@ class CaptionUI(QMainWindow):
         # You could still use a custom UIState if you wish, or just store directly:
         # self.config_ui_state = UIState(self, self.config_ui_data)
 
-        self.image_size = 850
+        # Note: this size MUST be smaller than screen size or very bad things happen.
+        self.image_size = 650
         self.help_text = (
             "Keyboard shortcuts when focusing on the prompt input field:\n"
             "Up arrow: previous image\n"
