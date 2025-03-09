@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QLineEdit,
     QFileDialog,
+    QFrame,
     QTabWidget,
     QVBoxLayout,
     QHBoxLayout,
@@ -30,12 +31,9 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QEvent
 from PySide6.QtGui import QCloseEvent
 
-# -------------------------------------------------------------------
-# Import the classes/functions you mentioned in your code. 
-# (We do not convert them here unless you've already provided them.)
-# -------------------------------------------------------------------
-#from modules.trainer.CloudTrainer import CloudTrainer
-#from modules.trainer.GenericTrainer import GenericTrainer
+
+from modules.trainer.CloudTrainer import CloudTrainer
+from modules.trainer.GenericTrainer import GenericTrainer
 from modules.ui.AdditionalEmbeddingsTab import AdditionalEmbeddingsTab
 from modules.ui.CaptionUI import CaptionUI
 from modules.ui.CloudTab import CloudTab
@@ -58,14 +56,11 @@ from modules.util.enum.TrainingMethod import TrainingMethod
 from modules.util.torch_util import torch_gc
 from modules.util.TrainProgress import TrainProgress
 from modules.util.ui.UIState import UIState
+from modules.util.ui import components
 from modules.zluda import ZLUDA
 
 
 class TrainUI(QMainWindow):
-    """
-    PySide6-based rewrite of your customtkinter-based TrainUI.
-    """
-
     # For type hints
     set_step_progress: Callable[[int, int], None]
     set_epoch_progress: Callable[[int, int], None]
@@ -122,19 +117,17 @@ class TrainUI(QMainWindow):
         main_layout.setContentsMargins(0, 0, 0, 0)
 
         # 1) Top bar
-        self.top_bar_component = self.top_bar()
+        self.top_bar_component = self.create_top_bar()
         main_layout.addWidget(self.top_bar_component)
 
         # 2) Middle content
-        content_frame = self.content_frame()
+        content_frame = self.create_content_frame()
         main_layout.addWidget(content_frame, stretch=1)
 
         # 3) Bottom bar
-        bottom_bar_frame = self.bottom_bar()
+        bottom_bar_frame = self.create_bottom_bar()
         main_layout.addWidget(bottom_bar_frame)
 
-        # In Tkinter, you did self.protocol("WM_DELETE_WINDOW", self.__close).
-        # In Qt, override closeEvent().
         self.setAttribute(Qt.WA_DeleteOnClose, True)
 
     # -----------------------------------------------------------------------
@@ -156,16 +149,60 @@ class TrainUI(QMainWindow):
         # self.close()  # not strictly needed if event.accept() was used
 
     # -----------------------------------------------------------------------
+    # Changing model/training
+    # -----------------------------------------------------------------------
+
+    def change_model_type(self, model_type: ModelType):
+        if self.model_tab:
+            self.model_tab.refresh_ui()
+        if self.training_tab:
+            self.training_tab.refresh_ui()
+        if self.lora_tab:
+            self.lora_tab.refresh_ui()
+
+    def change_training_method(self, training_method: TrainingMethod):
+        if not self.tabview:
+            return
+
+        if self.model_tab:
+            self.model_tab.refresh_ui()
+
+        # remove "LoRA" tab if it exists
+        if training_method != TrainingMethod.LORA and "LoRA" in self._tab_names():
+            index = self.tabview.indexOf(self.lora_tab)
+            if index >= 0:
+                self.tabview.removeTab(index)
+                self.lora_tab = None
+
+        # remove "embedding" tab if it exists
+        if training_method != TrainingMethod.EMBEDDING and "embedding" in self._tab_names():
+            # find it, remove it
+            # code depends on how you track "embedding_tab"
+            idx = self.tabview.indexOfByName("embedding")  # not standard, you'd store references
+            if idx >= 0:
+                self.tabview.removeTab(idx)
+
+        # add Lora tab if needed
+        if training_method == TrainingMethod.LORA and "LoRA" not in self._tab_names():
+            lora_widget = QWidget()
+            self.lora_tab = LoraTab(lora_widget, self.train_config, self.ui_state)
+            self.tabview.addTab(lora_widget, "LoRA")
+
+        # add embedding tab if needed
+        if training_method == TrainingMethod.EMBEDDING and "embedding" not in self._tab_names():
+            embedding_widget = QWidget()
+            self.embedding_tab(embedding_widget)
+            self.tabview.addTab(embedding_widget, "embedding")
+
+    def load_preset(self):
+        # For your additional embeddings tab refresh, etc.
+        if self.additional_embeddings_tab:
+            self.additional_embeddings_tab.refresh_ui()
+
+    # -----------------------------------------------------------------------
     # Top bar
     # -----------------------------------------------------------------------
-    def top_bar(self) -> TopBar:
-        """
-        Replace your top_bar(...) method.
-        You used to do:
-          return TopBar(master, self.train_config, self.ui_state,
-                        self.change_model_type, self.change_training_method, self.load_preset)
-        We'll do something similar. We'll assume TopBar is a QWidget that we can just instantiate.
-        """
+    def create_top_bar(self) -> TopBar:
         top_bar_widget = TopBar(
             master=self,
             train_config=self.train_config,
@@ -177,18 +214,17 @@ class TrainUI(QMainWindow):
         return top_bar_widget
 
     # -----------------------------------------------------------------------
-    # Bottom bar
+    # Bottom bar.
+    # Contains progress bars, status label,
+    # and buttons for training start, tensorboard popup, and export.
     # -----------------------------------------------------------------------
-    def bottom_bar(self) -> QWidget:
-        """
-        Equivalent to your bottom_bar(...) method, but in Qt.
-        """
+    def create_bottom_bar(self) -> QWidget:
+
         frame = QWidget()
         layout = QHBoxLayout(frame)
         layout.setContentsMargins(5, 5, 5, 5)
         layout.setSpacing(10)
 
-        # We'll mimic your "double_progress" with two QProgressBars
         self._step_progress_bar = QProgressBar()
         self._epoch_progress_bar = QProgressBar()
         self._step_progress_bar.setValue(0)
@@ -198,7 +234,6 @@ class TrainUI(QMainWindow):
         self._step_progress_bar.setTextVisible(True)
         self._epoch_progress_bar.setTextVisible(True)
 
-        # We'll define set_step_progress, set_epoch_progress:
         def _set_step_progress(value, max_value):
             self._step_progress_bar.setRange(0, max_value)
             self._step_progress_bar.setValue(value)
@@ -213,24 +248,20 @@ class TrainUI(QMainWindow):
         layout.addWidget(self._step_progress_bar)
         layout.addWidget(self._epoch_progress_bar)
 
-        # status label
         self.status_label = QLabel("")
         layout.addWidget(self.status_label)
 
-        # stretch
+        # spacer
         layout.addStretch(1)
 
-        # tensorboard button
         tensorboard_button = QPushButton("Tensorboard")
         tensorboard_button.clicked.connect(self.open_tensorboard)
         layout.addWidget(tensorboard_button)
 
-        # training button
         self.training_button = QPushButton("Start Training")
         self.training_button.clicked.connect(self.start_training)
         layout.addWidget(self.training_button)
 
-        # export button
         self.export_button = QPushButton("Export")
         self.export_button.setToolTip("Export the current configuration as a script to run without a UI")
         self.export_button.clicked.connect(self.export_training)
@@ -239,13 +270,11 @@ class TrainUI(QMainWindow):
         return frame
 
     # -----------------------------------------------------------------------
-    # Middle content: a tab widget
+    # Middle content: a tab widget, with tabs for each main function.
+    # eg: "General", "Model", "Data", "Concepts", "Training", etc.
     # -----------------------------------------------------------------------
-    def content_frame(self) -> QWidget:
-        """
-        Replaces your content_frame(...) method.
-        Instead of ctk.CTkFrame + ctk.CTkTabview, we use a QWidget + QTabWidget.
-        """
+    def create_content_frame(self) -> QWidget:
+
         frame = QWidget()
         layout = QVBoxLayout(frame)
         layout.setContentsMargins(5, 5, 5, 5)
@@ -291,26 +320,92 @@ class TrainUI(QMainWindow):
         return frame
 
     # -----------------------------------------------------------------------
-    # Tab creation (converted from your ctk.CTkScrollableFrame, etc.)
+    # Tab creation functions start here
     # -----------------------------------------------------------------------
     def create_general_tab(self) -> QWidget:
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        container = QWidget()
-        glayout = QGridLayout(container)
-        glayout.setColumnStretch(1, 1)
 
-        # Example: "Workspace Directory"
-        label_ws = QLabel("Workspace Directory")
-        line_ws = QLineEdit()
-        glayout.addWidget(label_ws, 0, 0)
-        glayout.addWidget(line_ws, 0, 1)
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
 
-        # Similarly for other items from create_general_tab
-        # (just replicate your ctk UI with standard Qt widgets)
-        # ...
-        scroll.setWidget(container)
-        return scroll
+        container = QFrame()
+        container_layout = QGridLayout(container)
+        container_layout.setContentsMargins(5, 5, 5, 5)
+        container_layout.setSpacing(5)
+        container.setLayout(container_layout)
+
+        scroll_area.setWidget(container)
+
+        # row=0 => "Workspace Directory"
+        components.label(container, 0, 0, "Workspace Directory",
+                        tooltip="The directory where all files of this training run are saved")
+        components.dir_entry(container, 0, 1, self.ui_state, "workspace_dir")
+
+        # row=1 => "Cache Directory"
+        components.label(container, 1, 0, "Cache Directory",
+                        tooltip="The directory where cached data is saved")
+        components.dir_entry(container, 1, 1, self.ui_state, "cache_dir")
+
+        # row=2 => "Continue from last backup"
+        components.label(container, 2, 0, "Continue from last backup",
+                        tooltip="Automatically continues training from the last backup saved in <workspace>/backup")
+        components.switch(container, 2, 1, self.ui_state, "continue_last_backup")
+
+        # row=3 => "Only Cache"
+        components.label(container, 3, 0, "Only Cache",
+                        tooltip="Only populate the cache, without any training")
+        components.switch(container, 3, 1, self.ui_state, "only_cache")
+
+        # row=4 => "Debug mode"
+        components.label(container, 4, 0, "Debug mode",
+                        tooltip="Save debug information during the training into the debug directory")
+        components.switch(container, 4, 1, self.ui_state, "debug_mode")
+
+        # row=5 => "Debug Directory"
+        components.label(container, 5, 0, "Debug Directory",
+                        tooltip="The directory where debug data is saved")
+        components.dir_entry(container, 5, 1, self.ui_state, "debug_dir")
+
+        # row=6 => "Tensorboard"
+        components.label(container, 6, 0, "Tensorboard",
+                        tooltip="Starts the Tensorboard Web UI during training")
+        components.switch(container, 6, 1, self.ui_state, "tensorboard")
+
+        # row=7 => "Expose Tensorboard" + "Tensorboard Port"
+        components.label(container, 7, 0, "Expose Tensorboard",
+                        tooltip="Exposes Tensorboard Web UI to all network interfaces (makes it accessible from the network)")
+        components.switch(container, 7, 1, self.ui_state, "tensorboard_expose")
+
+        components.label(container, 7, 2, "Tensorboard Port",
+                        tooltip="Port to use for Tensorboard link")
+        components.entry(container, 7, 3, self.ui_state, "tensorboard_port")
+
+        # row=8 => "Validation"
+        components.label(container, 8, 0, "Validation",
+                        tooltip="Enable validation steps and add new graph in tensorboard")
+        components.switch(container, 8, 1, self.ui_state, "validation")
+
+        # row=9 => "Validate after"
+        components.label(container, 9, 0, "Validate after",
+                        tooltip="The interval used when validate training")
+        components.time_entry(container, 9, 1, self.ui_state, "validate_after", "validate_after_unit")
+
+        # row=10 => "Dataloader Threads"
+        components.label(container, 10, 0, "Dataloader Threads",
+                        tooltip="Number of threads used for the data loader. Increase if your GPU has room during caching, decrease if it's going out of memory during caching.")
+        components.entry(container, 10, 1, self.ui_state, "dataloader_threads")
+
+        # row=11 => "Train Device"
+        components.label(container, 11, 0, "Train Device",
+                        tooltip='The device used for training. E.g. "cuda", "cuda:0", etc.')
+        components.entry(container, 11, 1, self.ui_state, "train_device")
+
+        # row=12 => "Temp Device"
+        components.label(container, 12, 0, "Temp Device",
+                        tooltip='The device used to temporarily offload models while they are not used. Default: "cpu"')
+        components.entry(container, 12, 1, self.ui_state, "temp_device")
+
+        return scroll_area
+
 
     def create_model_tab(self, parent=None) -> QWidget:
         # In the original code, this is ModelTab(...)
@@ -318,14 +413,54 @@ class TrainUI(QMainWindow):
         return ModelTab(self, self.train_config, self.ui_state)
 
     def create_data_tab(self) -> QWidget:
-        # Similarly, replicate your "data" tab
-        w = QScrollArea()
-        w.setWidgetResizable(True)
-        container = QWidget()
-        layout = QGridLayout(container)
-        # ...
-        w.setWidget(container)
-        return w
+        """
+        PySide6 version of your create_data_tab function.
+        Returns a QScrollArea with a container that has the relevant
+        label/switch UI elements for data tab.
+        """
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+
+        container = QFrame()
+        container_layout = QGridLayout(container)
+        container_layout.setContentsMargins(5, 5, 5, 5)
+        container_layout.setSpacing(5)
+        container.setLayout(container_layout)
+
+        scroll_area.setWidget(container)
+
+        # row=0 => "Aspect Ratio Bucketing"
+        components.label(
+            container, 0, 0,
+            "Aspect Ratio Bucketing",
+            tooltip="Aspect ratio bucketing enables training on images with different aspect ratios"
+        )
+        components.switch(container, 0, 1, self.ui_state, "aspect_ratio_bucketing")
+
+        # row=1 => "Latent Caching"
+        components.label(
+            container, 1, 0,
+            "Latent Caching",
+            tooltip="Caching of intermediate training data that can be re-used between epochs"
+        )
+        components.switch(container, 1, 1, self.ui_state, "latent_caching")
+
+        # row=2 => "Clear cache before training"
+        components.label(
+            container, 2, 0,
+            "Clear cache before training",
+            tooltip=(
+                "Clears the cache directory before starting to train. "
+                "Only disable this if you want to continue using the same cached data. "
+                "Disabling this can lead to errors if other settings are changed during a restart"
+            )
+        )
+        components.switch(container, 2, 1, self.ui_state, "clear_cache_before_training")
+
+        return scroll_area
+
+
 
     def create_concepts_tab(self) -> QWidget:
         # In your code: ConceptTab(master, self.train_config, self.ui_state)
@@ -423,50 +558,6 @@ class TrainUI(QMainWindow):
         # CloudTab(...) is presumably your own QWidget-based class
         return CloudTab(self, self.train_config, self.ui_state, parent=self)
 
-    # -----------------------------------------------------------------------
-    # Changing model/training
-    # -----------------------------------------------------------------------
-    def change_model_type(self, model_type: ModelType):
-        if self.model_tab:
-            self.model_tab.refresh_ui()
-        if self.training_tab:
-            self.training_tab.refresh_ui()
-        if self.lora_tab:
-            self.lora_tab.refresh_ui()
-
-    def change_training_method(self, training_method: TrainingMethod):
-        if not self.tabview:
-            return
-
-        if self.model_tab:
-            self.model_tab.refresh_ui()
-
-        # remove "LoRA" tab if it exists
-        if training_method != TrainingMethod.LORA and "LoRA" in self._tab_names():
-            index = self.tabview.indexOf(self.lora_tab)
-            if index >= 0:
-                self.tabview.removeTab(index)
-                self.lora_tab = None
-
-        # remove "embedding" tab if it exists
-        if training_method != TrainingMethod.EMBEDDING and "embedding" in self._tab_names():
-            # find it, remove it
-            # code depends on how you track "embedding_tab"
-            idx = self.tabview.indexOfByName("embedding")  # not standard, you'd store references
-            if idx >= 0:
-                self.tabview.removeTab(idx)
-
-        # add Lora tab if needed
-        if training_method == TrainingMethod.LORA and "LoRA" not in self._tab_names():
-            lora_widget = QWidget()
-            self.lora_tab = LoraTab(lora_widget, self.train_config, self.ui_state)
-            self.tabview.addTab(lora_widget, "LoRA")
-
-        # add embedding tab if needed
-        if training_method == TrainingMethod.EMBEDDING and "embedding" not in self._tab_names():
-            embedding_widget = QWidget()
-            self.embedding_tab(embedding_widget)
-            self.tabview.addTab(embedding_widget, "embedding")
 
     def _tab_names(self):
         return [self.tabview.tabText(i) for i in range(self.tabview.count())]
@@ -482,10 +573,6 @@ class TrainUI(QMainWindow):
         layout.addWidget(QLabel("Embedding tab content."))
         layout.addStretch(1)
 
-    def load_preset(self):
-        # For your additional embeddings tab refresh, etc.
-        if self.additional_embeddings_tab:
-            self.additional_embeddings_tab.refresh_ui()
 
     # -----------------------------------------------------------------------
     # Tensorboard

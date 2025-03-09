@@ -33,7 +33,7 @@ class _VarBase(QObject):
         self.valueChanged.emit(new_value)
         # also call any local callbacks we are tracking
         for cb in self._trace_callbacks.values():
-            cb(None, None, None)  # to mimic tkinter's callback signature
+            cb()
 
     def trace_add(self, callback: Callable[[Any, Any, Any], None]):
         """

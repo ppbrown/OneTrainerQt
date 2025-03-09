@@ -266,7 +266,7 @@ def time_entry(
         else:
             combo.setCurrentText(all_values[0])
 
-    var_unit.trace_add("write", lambda _0, _1, _2: update_combo())
+    ## FIXLATER: var_unit.trace_add("write", lambda _0, _1, _2: update_combo())
     update_combo()
 
     return container
@@ -337,7 +337,7 @@ def options(
         else:
             combo.setCurrentIndex(0)
 
-    var.trace_add("write", lambda _0, _1, _2: var_callback())
+    ## FIXLATER: var.trace_add("write", lambda _0, _1, _2: var_callback())
 
     grid = master.layout()
     if isinstance(grid, QGridLayout):
@@ -440,7 +440,7 @@ def options_kv(
             if command:
                 command(values[0][1])
 
-    var.trace_add("write", lambda _0, _1, _2: var_callback())
+    ## FIXLATER: var.trace_add("write", lambda _0, _1, _2: var_callback())
 
     grid = master.layout()
     if isinstance(grid, QGridLayout):
@@ -476,7 +476,7 @@ def switch(
         new_val = var.get()
         checkbox.setChecked(bool(new_val))
 
-    var.trace_add("write", lambda _0, _1, _2: var_callback())
+    ## FIXLATER: var.trace_add("write", lambda _0, _1, _2: var_callback())
 
     grid = master.layout()
     if isinstance(grid, QGridLayout):

@@ -31,7 +31,7 @@ class TopBar(QWidget):
         change_training_method_callback: Callable[[TrainingMethod], None],
         load_preset_callback: Callable[[], None]
     ):
-        super().__init__(master)  # calls QWidget.__init__(parent=master) in Qt
+        super().__init__()  # previously called QWidget.__init__(parent=master) ??
 
         self.train_config = train_config
         self.ui_state = ui_state
@@ -75,11 +75,12 @@ class TopBar(QWidget):
         # 3) "Wiki" button (column 4)
         wiki_button = QPushButton("Wiki")
         wiki_button.clicked.connect(self.open_wiki)
+        wiki_button.setToolTip("Open the OneTrainer Wiki in your browser")
         layout.addWidget(wiki_button, 0, 4)
 
         # 4) "save current config" button (column 3)
         save_button = QPushButton("save current config")
-        save_button.setToolTip("Save the current configuration in a custom preset")
+        save_button.setToolTip("Save the current configuration into the training preset directory")
         save_button.clicked.connect(self.__save_config)
         layout.addWidget(save_button, 0, 3)
 
@@ -141,12 +142,11 @@ class TopBar(QWidget):
             return
         self.__change_model_type(enum_val)
 
+    # Might be better named as __create_training_method_combobox
     def __create_training_method(self):
-        """
-        In the old code, you had a ctk OptionMenu with different values 
-        depending on model_type. We'll do the same with a QComboBox.
-        """
-        # If we already had a combo, remove it
+        # If we already had a combobox, remove it
+        # Although might be better to just enable/disable the VAE option if possible,
+        # since efffectively thats all we really do here.
         if self.training_method_widget:
             self.training_method_widget.deleteLater()
             self.training_method_widget = None
