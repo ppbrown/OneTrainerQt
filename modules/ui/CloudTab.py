@@ -13,48 +13,44 @@ from modules.util.enum.CloudFileSync import CloudFileSync
 from modules.util.enum.CloudType import CloudType
 from modules.util.ui.UIState import UIState
 
-class CloudTab(QWidget):
-    """
-    PySide6-based translation of your customtkinter-based CloudTab.
-    """
+class CloudTab(QScrollArea):
 
-    def __init__(self, master, train_config, ui_state, parent):
+
+    def __init__(self, train_config: TrainConfig, ui_state: UIState, parent):
         super().__init__()
 
-        self.master = master
         self.train_config = train_config
         self.ui_state = ui_state
         self.parent = parent
         self.reattach = False
 
-        # We'll create a QScrollArea for the "scrollable" portion
-        self.scroll_area = QScrollArea(self.master)
-        self.scroll_area.setWidgetResizable(True)
+        self.setWidgetResizable(True)
 
-        # Container widget that we place in the scroll area
-        self.container = QWidget()
-        self.scroll_area.setWidget(self.container)
+        # This is the top level that holds everything else
+        self.container = QFrame()
+        vbox = QVBoxLayout(self.container)
+        vbox.setContentsMargins(0, 0, 0, 0)
+        vbox.setSpacing(10)
+        self.setWidget(self.container)
+        self.container.setMinimumWidth(300)
+        self.container.setMinimumHeight(200)
+        self.container.setLayout(vbox)
 
-        # If you want the scroll area to fill the entire parent,
-        # you can place it with a layout, or do self.scroll_area.setGeometry, etc.
-        # We'll do a simple approach: 
-        self.layout = QVBoxLayout(self.master)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.addWidget(self.scroll_area)
+        self.grid_container = QWidget()
 
-        # We'll create a QGridLayout inside container to replicate your row/column arrangement
-        self.grid = QGridLayout(self.container)
+        self.grid = QGridLayout(self.grid_container)
+        self.grid_container.setLayout(self.grid)
+
+        vbox.addWidget(self.grid_container)
+
+        self.__build_ui()
+
+    # Fills self.grid with widgets
+    def __build_ui(self):
         self.grid.setColumnStretch(1, 1)
         self.grid.setColumnStretch(3, 1)
         self.grid.setColumnStretch(5, 1)
 
-        self.__build_ui()
-
-    def __build_ui(self):
-        """
-        Replaces your original code that calls ctk.CTkScrollableFrame(...) 
-        and places components.* calls in a grid.
-        """
         # row -> 0
         lbl_enabled = QLabel("Enabled")
         lbl_enabled.setToolTip("Enable cloud training")
