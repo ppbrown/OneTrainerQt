@@ -75,6 +75,7 @@ class ConfigList(ABC):
         self.top_frame_layout.setSpacing(5)
         self.master_layout.addWidget(self.top_frame)
 
+        # Area for added items.
         # The "element_list" area is typically scrollable
         self.scroll_area = QScrollArea(master)
         self.scroll_area.setWidgetResizable(True)
@@ -120,6 +121,8 @@ class ConfigList(ABC):
 
             # Build the UI
             self._create_element_list()
+
+        self.top_frame_layout.addStretch()
 
     # -----------------------------------------------------------------------
     # Abstract methods that child classes must implement
