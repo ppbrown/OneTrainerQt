@@ -437,7 +437,8 @@ class TrainUI(QMainWindow):
         bottom_frame.setLayout(bottom_frame_layout)
         container_layout.addWidget(bottom_frame, 1, 0)
 
-        SamplingTab(bottom_frame, self.train_config, self.ui_state)
+        # Have to save the object to avoid garbage collection for the internal callback
+        self.samplingtab = SamplingTab(bottom_frame, self.train_config, self.ui_state)
 
         return container
 

@@ -197,13 +197,13 @@ class ConfigList(ABC):
         # Add a widget for each element
         for i, element in enumerate(self.current_config):
             w = self.create_widget(
-                parent=self.scroll_content,
-                element=element,
-                i=i,
-                open_command=self.__open_element_window,
-                remove_command=self.__remove_element,
-                clone_command=self.__clone_element,
-                save_command=self.__save_current_config
+                self.scroll_content,
+                element,
+                i,
+                self.__open_element_window,
+                self.__remove_element,
+                self.__clone_element,
+                self.__save_current_config
             )
             self.scroll_layout.addWidget(w)
 
@@ -257,18 +257,19 @@ class ConfigList(ABC):
                         break
 
     def __add_element(self):
+        print("DEBUG:  __add_element")
         i = len(self.current_config)
         new_element = self.create_new_element()
         self.current_config.append(new_element)
 
         w = self.create_widget(
-            parent=self.scroll_content,
-            element=new_element,
-            i=i,
-            open_command=self.__open_element_window,
-            remove_command=self.__remove_element,
-            clone_command=self.__clone_element,
-            save_command=self.__save_current_config
+            self.scroll_content,
+            new_element,
+            i,
+            self.__open_element_window,
+            self.__remove_element,
+            self.__clone_element,
+            self.__save_current_config
         )
         self.scroll_layout.addWidget(w)
 
@@ -285,13 +286,13 @@ class ConfigList(ABC):
         self.current_config.append(new_element)
 
         w = self.create_widget(
-            parent=self.scroll_content,
-            element=new_element,
-            i=i,
-            open_command=self.__open_element_window,
-            remove_command=self.__remove_element,
-            clone_command=self.__clone_element,
-            save_command=self.__save_current_config
+            self.scroll_content,
+            new_element,
+            i,
+            self.__open_element_window,
+            self.__remove_element,
+            self.__clone_element,
+            self.__save_current_config
         )
         self.scroll_layout.addWidget(w)
 

@@ -182,10 +182,9 @@ class CaptionUI(QMainWindow):
         help_button.clicked.connect(self.print_help)
         self.top_bar_layout.addWidget(help_button)
 
+    # in Qt, state is NOT a boolean, but an integer: 0 (unchecked), 1 (partially checked), 2 (checked)
     def toggle_include_subdirectories(self, state):
-        self.config_ui_data["include_subdirectories"] = bool(state)
-        # If you want to refresh automatically each time it's toggled:
-        # self.load_directory(self.config_ui_data["include_subdirectories"])
+        self.config_ui_data["include_subdirectories"] = True if state == 2 else False
 
     # -----------------------------------------------------------------------
     # File list (left column)

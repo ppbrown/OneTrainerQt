@@ -54,7 +54,7 @@ class SampleWidget(QFrame):
       [X] [ + ] [switch] [width] [height] [seed] [prompt] [...]
     """
     def __init__(self, parent, element, i, open_command, remove_command, clone_command, save_command):
-        super().__init__(parent)
+        super().__init__()
 
         self.element = element
         self.ui_state = UIState(self, element)
@@ -141,9 +141,9 @@ class SampleWidget(QFrame):
     def __switch_enabled(self, state):
         """
         Called when the user toggles the QCheckBox.
+        state is NOT a bool, but 0,1,2 for unchecked, partial, checked.
         """
-        # update your element or UIState if you want
-        self.element.enabled = (state == Qt.Checked)
+        self.element.enabled = True if state == 2 else False
         self.save_command()
         self.__set_enabled()
 
