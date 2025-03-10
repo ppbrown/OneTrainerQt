@@ -39,6 +39,7 @@ from modules.ui.CaptionUI import CaptionUI
 from modules.ui.CloudTab import CloudTab
 from modules.ui.ConceptTab import ConceptTab
 from modules.ui.ConvertModelUI import ConvertModelUI
+from modules.ui.GeneralTab import GeneralTab
 from modules.ui.LoraTab import LoraTab
 from modules.ui.ModelTab import ModelTab
 from modules.ui.ProfilingWindow import ProfilingWindow
@@ -324,87 +325,7 @@ class TrainUI(QMainWindow):
     # -----------------------------------------------------------------------
     def create_general_tab(self) -> QWidget:
 
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-
-        container = QFrame()
-        container_layout = QGridLayout(container)
-        container_layout.setContentsMargins(5, 5, 5, 5)
-        container_layout.setSpacing(5)
-        container.setLayout(container_layout)
-
-        scroll_area.setWidget(container)
-
-        # row=0 => "Workspace Directory"
-        components.label(container, 0, 0, "Workspace Directory",
-                        tooltip="The directory where all files of this training run are saved")
-        components.dir_entry(container, 0, 1, self.ui_state, "workspace_dir")
-
-        # row=1 => "Cache Directory"
-        components.label(container, 1, 0, "Cache Directory",
-                        tooltip="The directory where cached data is saved")
-        components.dir_entry(container, 1, 1, self.ui_state, "cache_dir")
-
-        # row=2 => "Continue from last backup"
-        components.label(container, 2, 0, "Continue from last backup",
-                        tooltip="Automatically continues training from the last backup saved in <workspace>/backup")
-        components.switch(container, 2, 1, self.ui_state, "continue_last_backup")
-
-        # row=3 => "Only Cache"
-        components.label(container, 3, 0, "Only Cache",
-                        tooltip="Only populate the cache, without any training")
-        components.switch(container, 3, 1, self.ui_state, "only_cache")
-
-        # row=4 => "Debug mode"
-        components.label(container, 4, 0, "Debug mode",
-                        tooltip="Save debug information during the training into the debug directory")
-        components.switch(container, 4, 1, self.ui_state, "debug_mode")
-
-        # row=5 => "Debug Directory"
-        components.label(container, 5, 0, "Debug Directory",
-                        tooltip="The directory where debug data is saved")
-        components.dir_entry(container, 5, 1, self.ui_state, "debug_dir")
-
-        # row=6 => "Tensorboard"
-        components.label(container, 6, 0, "Tensorboard",
-                        tooltip="Starts the Tensorboard Web UI during training")
-        components.switch(container, 6, 1, self.ui_state, "tensorboard")
-
-        # row=7 => "Expose Tensorboard" + "Tensorboard Port"
-        components.label(container, 7, 0, "Expose Tensorboard",
-                        tooltip="Exposes Tensorboard Web UI to all network interfaces (makes it accessible from the network)")
-        components.switch(container, 7, 1, self.ui_state, "tensorboard_expose")
-
-        components.label(container, 7, 2, "Tensorboard Port",
-                        tooltip="Port to use for Tensorboard link")
-        components.entry(container, 7, 3, self.ui_state, "tensorboard_port")
-
-        # row=8 => "Validation"
-        components.label(container, 8, 0, "Validation",
-                        tooltip="Enable validation steps and add new graph in tensorboard")
-        components.switch(container, 8, 1, self.ui_state, "validation")
-
-        # row=9 => "Validate after"
-        components.label(container, 9, 0, "Validate after",
-                        tooltip="The interval used when validate training")
-        components.time_entry(container, 9, 1, self.ui_state, "validate_after", "validate_after_unit")
-
-        # row=10 => "Dataloader Threads"
-        components.label(container, 10, 0, "Dataloader Threads",
-                        tooltip="Number of threads used for the data loader. Increase if your GPU has room during caching, decrease if it's going out of memory during caching.")
-        components.entry(container, 10, 1, self.ui_state, "dataloader_threads")
-
-        # row=11 => "Train Device"
-        components.label(container, 11, 0, "Train Device",
-                        tooltip='The device used for training. E.g. "cuda", "cuda:0", etc.')
-        components.entry(container, 11, 1, self.ui_state, "train_device")
-
-        # row=12 => "Temp Device"
-        components.label(container, 12, 0, "Temp Device",
-                        tooltip='The device used to temporarily offload models while they are not used. Default: "cpu"')
-        components.entry(container, 12, 1, self.ui_state, "temp_device")
-
-        return scroll_area
+        return GeneralTab(self.ui_state)
 
 
     def create_model_tab(self, parent=None) -> QWidget:
