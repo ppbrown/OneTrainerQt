@@ -7,11 +7,11 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
-# from modules.util.config.TrainConfig import TrainConfig
-# from modules.util.enum.CloudAction import CloudAction
-# from modules.util.enum.CloudFileSync import CloudFileSync
-# from modules.util.enum.CloudType import CloudType
-# from modules.util.ui.UIState import UIState
+from modules.util.config.TrainConfig import TrainConfig
+from modules.util.enum.CloudAction import CloudAction
+from modules.util.enum.CloudFileSync import CloudFileSync
+from modules.util.enum.CloudType import CloudType
+from modules.util.ui.UIState import UIState
 
 class CloudTab(QWidget):
     """
