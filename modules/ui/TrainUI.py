@@ -328,12 +328,8 @@ class TrainUI(QMainWindow):
         return ModelTab(self, self.train_config, self.ui_state)
 
     def create_data_tab(self) -> QWidget:
-        """
-        PySide6 version of your create_data_tab function.
-        Returns a QScrollArea with a container that has the relevant
-        label/switch UI elements for data tab.
-        """
 
+        """
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
 
@@ -344,6 +340,26 @@ class TrainUI(QMainWindow):
         container.setLayout(container_layout)
 
         scroll_area.setWidget(container)
+        """
+
+        scroll_area = QScrollArea()
+        scroll_container = QWidget()
+
+        vbox = QVBoxLayout(scroll_container)
+        vbox.setContentsMargins(0, 0, 0, 0)
+        vbox.setSpacing(10)
+        scroll_area.setWidget(scroll_container)
+        scroll_container.setMinimumWidth(300)
+        scroll_container.setMinimumHeight(200)
+        scroll_container.setLayout(vbox)
+
+        container = QWidget()
+        grid_layout = QGridLayout(container)
+        container.setLayout(grid_layout)
+        vbox.addWidget(container, alignment=Qt.AlignTop | Qt.AlignLeft)
+
+        # Add a stretch to push the grid to the top so extra space stays empty
+        vbox.addStretch()
 
         # row=0 => "Aspect Ratio Bucketing"
         components.label(
