@@ -5,13 +5,16 @@ script_imports()
 from modules.ui.CaptionUI import CaptionUI
 from modules.util.args.CaptionUIArgs import CaptionUIArgs
 
+import sys
+from PySide6.QtWidgets import QApplication
 
 def main():
-    args = CaptionUIArgs.parse_args()
+    app = QApplication(sys.argv)
 
-    ui = CaptionUI(None, args.dir, args.include_subdirectories)
-    ui.mainloop()
+    window = CaptionUI()
+    window.show()
 
+    sys.exit(app.exec())
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
