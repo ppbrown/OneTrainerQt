@@ -1,4 +1,3 @@
-# config_list.py
 
 import os
 import json
@@ -8,7 +7,7 @@ from abc import ABC, abstractmethod
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QFrame,
-    QScrollArea, QPushButton, QComboBox, QLineEdit, QInputDialog
+    QScrollArea, QPushButton, QComboBox, QLayout, QInputDialog
 )
 from PySide6.QtCore import Qt
 
@@ -20,8 +19,11 @@ from modules.util.ui.UIState import UIState
 
 class ConfigList(ABC):
     """
-    PySide6-based abstract class that manages a list of config elements.
-    Replaces the original customtkinter-based code.
+    ABbstract class that manages a list of config elements (of type BaseConfig)
+    Child classes must implement create_widget() and create_new_element().
+    In additiona to handling a list of elements, this class may also handle loading and saving them
+    to an external file. In which case, it organized named "configs" of elements.
+    The configs can be saved to external .json files.
     """
 
     def __init__(
@@ -62,6 +64,7 @@ class ConfigList(ABC):
             self.master_layout = QVBoxLayout(master)
             self.master_layout.setContentsMargins(0, 0, 0, 0)
             master.setLayout(self.master_layout)
+            self.master_layout.setSizeConstraint(QLayout.SetMinimumSize)
         else:
             self.master_layout = master.layout()
 
@@ -77,11 +80,12 @@ class ConfigList(ABC):
         self.scroll_area.setWidgetResizable(True)
         self.scroll_content = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_content)
+        self.scroll_layout.setSizeConstraint(QLayout.SetMinimumSize)
         self.scroll_area.setWidget(self.scroll_content)
-        print("pyside conversion error: Need to figure out what to do here: ConfigList()")
-        ###self.master_layout.addWidget(self.scroll_area, stretch=1)
+        
+        self.master_layout.addWidget(self.scroll_area)
 
-        # This is where we store the actual config list
+        # This is where we store the actual config list elements
         if from_external_file:
             # We hold a dropdown for selecting config files, plus an “add config” button, etc.
             self.configs_dropdown = None
