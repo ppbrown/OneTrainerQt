@@ -8,7 +8,8 @@ from typing import Any, Callable
 
 from PySide6.QtWidgets import (
     QLabel, QLineEdit, QPushButton, QCheckBox, QComboBox, QProgressBar,
-    QFileDialog, QFrame, QGridLayout, QWidget
+    QScrollArea, QVBoxLayout, QGridLayout,
+    QFileDialog, QFrame, QWidget
 )
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QPixmap
@@ -55,6 +56,36 @@ def app_title(master: QWidget, row: int, column: int):
     label_text.setStyleSheet("font-size: 20px; font-weight: bold;")
     layout.addWidget(label_text)
 
+def create_gridlayout(scroll_area: QScrollArea):
+    """
+    Given a QScrollArea widget, will pre-populate it with a widget tree that allows use of a gridlayout
+    that will compact itself around the added widgets, rather than expanding to fill all available space.
+    Parameters:
+        scroll_area (QScrollArea): The scroll area where the container widget and grid layout are embedded.
+        
+    Returns:
+        QWidget: A container with a grid layout for adding further widgets. Use container.layout() to get the grid layout.
+    """
+    scroll_container = QFrame()
+
+    vbox = QVBoxLayout(scroll_container)
+    vbox.setContentsMargins(0, 0, 0, 0)
+    vbox.setSpacing(10)
+    scroll_area.setWidget(scroll_container)
+    scroll_container.setMinimumWidth(300)
+    scroll_container.setMinimumHeight(200)
+    scroll_container.setLayout(vbox)
+
+    container = QWidget()
+    grid_layout = QGridLayout(container)
+    container.setLayout(grid_layout)
+    vbox.addWidget(container, alignment=Qt.AlignTop | Qt.AlignLeft)
+
+    # Add a stretch to push the grid to the top so extra space stays empty
+    vbox.addStretch()
+
+    return container
+    # We return container instead of just the grid layout, because our label() func below expects a widget.
 
 # Should be called create_label()
 def label(

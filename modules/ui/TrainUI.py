@@ -329,39 +329,10 @@ class TrainUI(QMainWindow):
 
     def create_data_tab(self) -> QWidget:
 
-        """
+    
         scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
+        container = components.create_gridlayout(scroll_area)
 
-        container = QFrame()
-        container_layout = QGridLayout(container)
-        container_layout.setContentsMargins(5, 5, 5, 5)
-        container_layout.setSpacing(5)
-        container.setLayout(container_layout)
-
-        scroll_area.setWidget(container)
-        """
-
-        scroll_area = QScrollArea()
-        scroll_container = QWidget()
-
-        vbox = QVBoxLayout(scroll_container)
-        vbox.setContentsMargins(0, 0, 0, 0)
-        vbox.setSpacing(10)
-        scroll_area.setWidget(scroll_container)
-        scroll_container.setMinimumWidth(300)
-        scroll_container.setMinimumHeight(200)
-        scroll_container.setLayout(vbox)
-
-        container = QWidget()
-        grid_layout = QGridLayout(container)
-        container.setLayout(grid_layout)
-        vbox.addWidget(container, alignment=Qt.AlignTop | Qt.AlignLeft)
-
-        # Add a stretch to push the grid to the top so extra space stays empty
-        vbox.addStretch()
-
-        # row=0 => "Aspect Ratio Bucketing"
         components.label(
             container, 0, 0,
             "Aspect Ratio Bucketing",
@@ -369,7 +340,6 @@ class TrainUI(QMainWindow):
         )
         components.switch(container, 0, 1, self.ui_state, "aspect_ratio_bucketing")
 
-        # row=1 => "Latent Caching"
         components.label(
             container, 1, 0,
             "Latent Caching",
@@ -377,7 +347,6 @@ class TrainUI(QMainWindow):
         )
         components.switch(container, 1, 1, self.ui_state, "latent_caching")
 
-        # row=2 => "Clear cache before training"
         components.label(
             container, 2, 0,
             "Clear cache before training",
@@ -448,18 +417,8 @@ class TrainUI(QMainWindow):
         # We use a widget-inside-a-widget, because QGridLayout is stupid and tries to take
         # over the whole scroll area.
         scroll_area = QScrollArea()
-        scroll_container = QWidget()
-
-        vbox = QVBoxLayout(scroll_container)
-        vbox.setContentsMargins(0, 0, 0, 0)
-        vbox.setSpacing(10)
-        scroll_area.setWidget(scroll_container)
-        scroll_container.setMinimumWidth(300)
-        scroll_container.setMinimumHeight(200)
-        scroll_container.setLayout(vbox)
-
-        grid_container = QWidget()
-        grid_layout = QGridLayout(grid_container)
+        grid_container = components.create_gridlayout(scroll_area)
+        grid_layout = grid_container.layout()
 
         components.label(
             grid_container, 0, 0, "Dataset Tools",
@@ -493,12 +452,6 @@ class TrainUI(QMainWindow):
             grid_container, 3, 1, "Open",
             command=self.open_profiling_tool
         )
-
-        grid_container.setLayout(grid_layout)
-        vbox.addWidget(grid_container, alignment=Qt.AlignTop | Qt.AlignLeft)
-
-        # Add a stretch to push the grid to the top so extra space stays empty
-        vbox.addStretch()
 
         return scroll_area
 
