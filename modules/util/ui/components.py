@@ -56,12 +56,14 @@ def app_title(master: QWidget, row: int, column: int):
     label_text.setStyleSheet("font-size: 20px; font-weight: bold;")
     layout.addWidget(label_text)
 
-def create_gridlayout(scroll_area: QScrollArea):
+def create_gridlayout(scroll_area: QScrollArea, minimum_width=300, minimum_height=200):
     """
     Given a QScrollArea widget, will pre-populate it with a widget tree that allows use of a gridlayout
     that will compact itself around the added widgets, rather than expanding to fill all available space.
     Parameters:
         scroll_area (QScrollArea): The scroll area where the container widget and grid layout are embedded.
+        minimum_width (int): The minimum width of the container widget.
+        minimum_height (int): The minimum height of the container widget.
         
     Returns:
         QWidget: A container with a grid layout for adding further widgets. Use container.layout() to get the grid layout.
@@ -69,11 +71,11 @@ def create_gridlayout(scroll_area: QScrollArea):
     scroll_container = QFrame()
 
     vbox = QVBoxLayout(scroll_container)
-    vbox.setContentsMargins(0, 0, 0, 0)
+    vbox.setContentsMargins(5, 5, 5, 5)
     vbox.setSpacing(10)
     scroll_area.setWidget(scroll_container)
-    scroll_container.setMinimumWidth(300)
-    scroll_container.setMinimumHeight(200)
+    scroll_container.setMinimumWidth(minimum_width)
+    scroll_container.setMinimumHeight(minimum_height)
     scroll_container.setLayout(vbox)
 
     container = QWidget()

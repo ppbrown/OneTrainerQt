@@ -393,24 +393,45 @@ class TrainUI(QMainWindow):
         return w
 
     def create_backup_tab(self) -> QWidget:
-        w = QScrollArea()
-        w.setWidgetResizable(True)
-        container = QWidget()
-        layout = QGridLayout(container)
+        scroll_area = QScrollArea()
 
-        # "Backup Now" button
-        backup_now_button = QPushButton("backup now")
-        backup_now_button.clicked.connect(self.backup_now)
-        layout.addWidget(backup_now_button, 0, 0)
+        frame = components.create_gridlayout(scroll_area,minimum_width=700, minimum_height=500) 
 
-        # "save now" button
-        save_now_button = QPushButton("save now")
-        save_now_button.clicked.connect(self.save_now)
-        layout.addWidget(save_now_button, 0, 1)
+        components.label(frame, 0, 0, "Backup After",
+                         tooltip="The interval used when automatically creating model backups during training")
+        components.time_entry(frame, 0, 1, self.ui_state, "backup_after", "backup_after_unit")
 
-        container.setLayout(layout)
-        w.setWidget(container)
-        return w
+        components.button(frame, 0, 3, "backup now", self.backup_now)
+
+        components.label(frame, 1, 0, "Rolling Backup",
+                         tooltip="If rolling backups are enabled, older backups are deleted automatically")
+        components.switch(frame, 1, 1, self.ui_state, "rolling_backup")
+
+        components.label(frame, 1, 3, "Rolling Backup Count",
+                         tooltip="Defines the number of backups to keep if rolling backups are enabled")
+        components.entry(frame, 1, 4, self.ui_state, "rolling_backup_count")
+
+        components.label(frame, 2, 0, "Backup Before Save",
+                         tooltip="Create a full backup before saving the final model")
+        components.switch(frame, 2, 1, self.ui_state, "backup_before_save")
+
+        components.label(frame, 3, 0, "Save Every",
+                         tooltip="The interval used when automatically saving the model during training")
+        components.time_entry(frame, 3, 1, self.ui_state, "save_every", "save_every_unit")
+
+        components.button(frame, 3, 3, "save now", self.save_now)
+
+        components.label(frame, 4, 0, "Skip First",
+                         tooltip="Start saving automatically after this interval has elapsed")
+        components.entry(frame, 4, 1, self.ui_state, "save_skip_first", width=50, sticky="nw")
+
+        components.label(frame, 5, 0, "Save Filename Prefix",
+                         tooltip="The prefix for filenames used when saving the model during training")
+        components.entry(frame, 5, 1, self.ui_state, "save_filename_prefix")
+
+
+
+        return scroll_area
 
 
     def create_tools_tab(self) -> QWidget:
