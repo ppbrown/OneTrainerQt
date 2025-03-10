@@ -81,7 +81,9 @@ def create_gridlayout(scroll_area: QScrollArea):
     grid_layout = QGridLayout(container)
     container.setLayout(grid_layout)
     vbox.addWidget(container, alignment=Qt.AlignTop | Qt.AlignLeft)
-    grid_layout.setSizeConstraint(QLayout.SetMinimumSize)
+
+    # Putting setSizeContraint on the grid layout itself doesn't work, it has to be on the parent widget.
+    # grid_layout.setSizeConstraint(QLayout.SetMinimumSize)
 
     # Add a stretch to push the grid to the top so extra space stays empty
     vbox.addStretch()
