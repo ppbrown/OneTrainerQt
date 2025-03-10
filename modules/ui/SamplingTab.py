@@ -4,9 +4,7 @@ from PySide6.QtWidgets import (
     QWidget, QFrame, QLabel, QPushButton, QLineEdit, QCheckBox, QGridLayout
 )
 from PySide6.QtCore import Qt
-# from PySide6.QtGui import ???
 
-# If these are your custom classes, import their PySide6 versions:
 from modules.ui.ConfigList import ConfigList  # your PySide6-based class
 from modules.ui.SampleParamsWindow import SampleParamsWindow
 from modules.util.config.SampleConfig import SampleConfig
@@ -14,18 +12,15 @@ from modules.util.config.TrainConfig import TrainConfig
 from modules.util.ui.UIState import UIState
 
 
-# pyside conversion warning:
-# this typing is a rushjob just to get the UI to display
-# This needs to be properly converted to PySide6
-###class SamplingTab(ConfigList):
-class SamplingTab(QWidget):    
+# This init does not actually create a tab.
+# It only sets up a struct with some key info
+class SamplingTab(ConfigList):    
     """
     A PySide6-based equivalent to your customtkinter-based SamplingTab.
     Inherits from ConfigList, presumably also adapted for PySide6.
     """
     def __init__(self, parent, train_config, ui_state):
-        super().__init__()
-        """
+        
         super().__init__(
             master=parent,
             train_config=train_config,
@@ -37,32 +32,24 @@ class SamplingTab(QWidget):
             add_button_text="add sample",
             is_full_width=True,
         )
-        """
+        
 
     def create_widget(self, parent_widget, element, i, open_command, remove_command, clone_command, save_command):
-        """
-        Returns a SampleWidget instance for each sample.
-        """
+
         return SampleWidget(parent_widget, element, i, open_command, remove_command, clone_command, save_command)
 
     def create_new_element(self) -> dict:
-        """
-        Returns a new sample config dict (the default).
-        """
+
         return SampleConfig.default_values()
 
     def open_element_window(self, i, ui_state):
-        """
-        Replaces your ctk.CTkToplevel usage with a QDialog, or something similar.
-        We'll assume SampleParamsWindow is also a PySide6 class.
-        """
+
         # ui_state is presumably a single UIState or some structure
         return SampleParamsWindow(self, self.current_config[i], ui_state)
 
 
 class SampleWidget(QFrame):
     """
-    PySide6 translation of your ctk.CTkFrame-based SampleWidget.
     Lays out controls for a single sample in a row: 
       [X] [ + ] [switch] [width] [height] [seed] [prompt] [...]
     """
