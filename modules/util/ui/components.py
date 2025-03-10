@@ -17,11 +17,12 @@ from PIL import Image
 
 from modules.util.enum.TimeUnit import TimeUnit
 from modules.util.path_util import supported_image_extensions
-from modules.util.ui.ToolTip import ToolTip  # Assume you have a PySide6-based tooltip or a stub
 from modules.util.ui.UIState import UIState
 
 PAD = 10
 
+def add_tooltip(widget: QWidget, text: str = "widget info"):
+        widget.setToolTip(text)
 
 def app_title(master: QWidget, row: int, column: int):
     """
@@ -81,7 +82,7 @@ def label(
         lbl.setContentsMargins(pad, pad, pad, pad)
 
     if tooltip:
-        ToolTip(lbl, tooltip, wide=wide_tooltip)
+        add_tooltip(lbl, tooltip)
 
     return lbl
 
@@ -113,7 +114,7 @@ def entry(
         grid.addWidget(line_edit, row, column, 1, 1)
 
     if tooltip:
-        ToolTip(line_edit, tooltip, wide=wide_tooltip)
+        add_tooltip(line_edit, tooltip)
 
     def on_editing_finished():
         text_value = line_edit.text()
@@ -299,7 +300,7 @@ def button(
     btn.clicked.connect(command)
 
     if tooltip:
-        ToolTip(btn, tooltip, x_position=25)
+        add_tooltip(btn, tooltip)
 
     return btn
 

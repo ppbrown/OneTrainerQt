@@ -2,8 +2,10 @@
 
 """
 Thoughts from ppbrown:
-Should probably examine all places where this is used, and where possible,
-use built-in pyside tooltip support instead
+
+This was autoconverted by ChatGPT, but it is obsolete.
+Use components.add_tooltip() instead.
+This is a custom tooltip implementation, which is not needed in PySide6.
 """
 
 import sys
