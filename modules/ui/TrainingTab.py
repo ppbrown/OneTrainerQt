@@ -21,20 +21,16 @@ from modules.util.enum.TimestepDistribution import TimestepDistribution
 from modules.util.optimizer_util import change_optimizer
 from modules.util.ui.UIState import UIState
 
-# If you have these classes, import them:
-# from modules.ui.OffloadingWindow import OffloadingWindow
-# from modules.ui.OptimizerParamsWindow import OptimizerParamsWindow
-# from modules.ui.SchedulerParamsWindow import SchedulerParamsWindow
-# from modules.ui.TimestepDistributionWindow import TimestepDistributionWindow
+from modules.ui.OffloadingWindow import OffloadingWindow
+from modules.ui.OptimizerParamsWindow import OptimizerParamsWindow
+from modules.ui.SchedulerParamsWindow import SchedulerParamsWindow
+from modules.ui.TimestepDistributionWindow import TimestepDistributionWindow
 
 
 class TrainingTab(QWidget):
-    """
-    A PySide6-based replica of your customtkinter-based TrainingTab code.
-    """
 
-    def __init__(self, parent: QWidget, train_config: TrainConfig, ui_state: UIState):
-        super().__init__(parent)
+    def __init__(self, train_config: TrainConfig, ui_state: UIState):
+        super().__init__()
 
         self.train_config = train_config
         self.ui_state = ui_state
