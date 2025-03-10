@@ -57,10 +57,10 @@ class SampleWidget(QFrame):
         super().__init__(parent)
 
         self.element = element
-        self.ui_state = UIState(self, element)  # If your UIState is also adapted to PySide6
+        self.ui_state = UIState(self, element)
         self.i = i
         self.save_command = save_command
-        self.open_command = open_command  # We'll store so we can call it if needed
+        self.open_command = open_command
 
         # QFrame config
         self.setFrameShape(QFrame.StyledPanel)
