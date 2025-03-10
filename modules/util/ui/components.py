@@ -8,7 +8,7 @@ from typing import Any, Callable
 
 from PySide6.QtWidgets import (
     QLabel, QLineEdit, QPushButton, QCheckBox, QComboBox, QProgressBar,
-    QScrollArea, QVBoxLayout, QGridLayout,
+    QScrollArea, QVBoxLayout, QGridLayout, QLayout,
     QFileDialog, QFrame, QWidget
 )
 from PySide6.QtCore import Qt, QSize
@@ -56,14 +56,12 @@ def app_title(master: QWidget, row: int, column: int):
     label_text.setStyleSheet("font-size: 20px; font-weight: bold;")
     layout.addWidget(label_text)
 
-def create_gridlayout(scroll_area: QScrollArea, minimum_width=300, minimum_height=200):
+def create_gridlayout(scroll_area: QScrollArea):
     """
     Given a QScrollArea widget, will pre-populate it with a widget tree that allows use of a gridlayout
     that will compact itself around the added widgets, rather than expanding to fill all available space.
     Parameters:
         scroll_area (QScrollArea): The scroll area where the container widget and grid layout are embedded.
-        minimum_width (int): The minimum width of the container widget.
-        minimum_height (int): The minimum height of the container widget.
         
     Returns:
         QWidget: A container with a grid layout for adding further widgets. Use container.layout() to get the grid layout.
@@ -73,20 +71,23 @@ def create_gridlayout(scroll_area: QScrollArea, minimum_width=300, minimum_heigh
     vbox = QVBoxLayout(scroll_container)
     vbox.setContentsMargins(5, 5, 5, 5)
     vbox.setSpacing(10)
-    scroll_area.setWidget(scroll_container)
-    scroll_container.setMinimumWidth(minimum_width)
-    scroll_container.setMinimumHeight(minimum_height)
+    vbox.setSizeConstraint(QLayout.SetMinimumSize)
+    
     scroll_container.setLayout(vbox)
+    scroll_area.setWidget(scroll_container)
+
 
     container = QWidget()
     grid_layout = QGridLayout(container)
     container.setLayout(grid_layout)
     vbox.addWidget(container, alignment=Qt.AlignTop | Qt.AlignLeft)
+    grid_layout.setSizeConstraint(QLayout.SetMinimumSize)
 
     # Add a stretch to push the grid to the top so extra space stays empty
     vbox.addStretch()
 
     return container
+
     # We return container instead of just the grid layout, because our label() func below expects a widget.
 
 # Should be called create_label()

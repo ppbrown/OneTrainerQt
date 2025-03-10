@@ -369,33 +369,83 @@ class TrainUI(QMainWindow):
     def create_training_tab(self) -> TrainingTab:
         return TrainingTab(self.train_config, self.ui_state)
 
+
     def create_sampling_tab(self) -> QWidget:
-        # In your code, you had some complex structure with "sample after" controls,
-        # plus a SamplingTab(...) in a sub-frame. We'll do a basic version:
-        w = QWidget()
-        layout = QVBoxLayout(w)
+        container = QFrame()
+        container_layout = QGridLayout(container)
+        container_layout.setContentsMargins(5, 5, 5, 5)
+        container_layout.setSpacing(5)
+        container.setLayout(container_layout)
 
-        # "Sample Now" button
-        sample_now_button = QPushButton("sample now")
-        sample_now_button.clicked.connect(self.sample_now)
-        layout.addWidget(sample_now_button)
+        # top_frame
+        top_frame = QFrame(container)
+        top_frame_layout = QGridLayout(top_frame)
+        top_frame_layout.setContentsMargins(0,0,0,0)
+        top_frame_layout.setSpacing(5)
+        top_frame.setLayout(top_frame_layout)
+        container_layout.addWidget(top_frame, 0, 0)
 
-        # "manual sample" => open_sample_ui
-        manual_sample_button = QPushButton("manual sample")
-        manual_sample_button.clicked.connect(self.open_sample_ui)
-        layout.addWidget(manual_sample_button)
+        # sub_frame
+        sub_frame = QFrame(top_frame)
+        sub_frame_layout = QGridLayout(sub_frame)
+        sub_frame_layout.setContentsMargins(0,0,0,0)
+        sub_frame_layout.setSpacing(5)
+        sub_frame.setLayout(sub_frame_layout)
+        top_frame_layout.addWidget(sub_frame, 1, 0, 1, 6)  # row=1 col=0..5
 
-        # Then add the actual sampling options in a sub-area
-        sampling_tab_widget = SamplingTab(self, self.train_config, self.ui_state)
-        layout.addWidget(sampling_tab_widget)
+        # "Sample After" row=0 col=0..1
+        components.label(top_frame, 0, 0, "Sample After",
+                        tooltip="The interval used when automatically sampling from the model during training")
+        components.time_entry(top_frame, 0, 1, self.ui_state, "sample_after", "sample_after_unit")
 
-        layout.addStretch(1)
-        return w
+        # skip first
+        components.label(top_frame, 0, 2, "Skip First",
+                        tooltip="Start sampling automatically after this interval has elapsed.")
+        components.entry(top_frame, 0, 3, self.ui_state, "sample_skip_first", width=50, sticky="nw")
+
+        # format
+        components.label(top_frame, 0, 4, "Format",
+                        tooltip="File Format used when saving samples")
+        components.options_kv(
+            top_frame, 0, 5,
+            [
+                ("PNG", ImageFormat.PNG),
+                ("JPG", ImageFormat.JPG),
+            ],
+            self.ui_state, "sample_image_format"
+        )
+
+        # sample now
+        components.button(top_frame, 0, 6, "sample now", self.sample_now)
+        # manual sample
+        components.button(top_frame, 0, 7, "manual sample", self.open_sample_ui)
+
+        # sub_frame row=0 col=0..3
+        components.label(sub_frame, 0, 0, "Non-EMA Sampling",
+                        tooltip="Whether to include non-ema sampling when using ema.")
+        components.switch(sub_frame, 0, 1, self.ui_state, "non_ema_sampling")
+
+        components.label(sub_frame, 0, 2, "Samples to Tensorboard",
+                        tooltip="Whether to include sample images in the Tensorboard output.")
+        components.switch(sub_frame, 0, 3, self.ui_state, "samples_to_tensorboard")
+
+        # "frame" for table row=1 col=0
+        bottom_frame = QFrame(container)
+        bottom_frame_layout = QGridLayout(bottom_frame)
+        bottom_frame_layout.setContentsMargins(0,0,0,0)
+        bottom_frame_layout.setSpacing(5)
+        bottom_frame.setLayout(bottom_frame_layout)
+        container_layout.addWidget(bottom_frame, 1, 0)
+
+        SamplingTab(bottom_frame, self.train_config, self.ui_state)
+
+        return container
+
 
     def create_backup_tab(self) -> QWidget:
         scroll_area = QScrollArea()
 
-        frame = components.create_gridlayout(scroll_area,minimum_width=700, minimum_height=500) 
+        frame = components.create_gridlayout(scroll_area) 
 
         components.label(frame, 0, 0, "Backup After",
                          tooltip="The interval used when automatically creating model backups during training")
