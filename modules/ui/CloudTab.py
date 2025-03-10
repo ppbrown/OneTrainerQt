@@ -24,24 +24,13 @@ class CloudTab(QScrollArea):
         self.parent = parent
         self.reattach = False
 
+        container = QFrame()
+        self.grid = QGridLayout(container)
+        container.setLayout(self.grid)
+        self.setWidget(container)
+
+
         self.setWidgetResizable(True)
-
-        # This is the top level that holds everything else
-        self.container = QFrame()
-        vbox = QVBoxLayout(self.container)
-        vbox.setContentsMargins(0, 0, 0, 0)
-        vbox.setSpacing(10)
-        self.setWidget(self.container)
-        self.container.setMinimumWidth(300)
-        self.container.setMinimumHeight(200)
-        self.container.setLayout(vbox)
-
-        self.grid_container = QWidget()
-
-        self.grid = QGridLayout(self.grid_container)
-        self.grid_container.setLayout(self.grid)
-
-        vbox.addWidget(self.grid_container)
 
         self.__build_ui()
 

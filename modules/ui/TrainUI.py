@@ -492,7 +492,7 @@ class TrainUI(QMainWindow):
 
     def create_cloud_tab(self) -> QWidget:
         # CloudTab(...) is presumably your own QWidget-based class
-        return CloudTab(self, self.train_config, self.ui_state, parent=self)
+        return CloudTab(self.train_config, self.ui_state, self)
 
 
     def _tab_names(self):

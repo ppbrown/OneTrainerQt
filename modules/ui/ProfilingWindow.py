@@ -13,7 +13,7 @@ from scalene import scalene_profiler
 
 class ProfilingWindow(QDialog):
     def __init__(self, parent=None):
-        super().__init__(parent)
+        super().__init__()
 
         self.setWindowTitle("Profiling")
         self.resize(512, 512)

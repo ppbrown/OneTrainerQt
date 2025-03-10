@@ -28,22 +28,18 @@ def app_title(master: QWidget, row: int, column: int):
     """
     Creates a small frame with an icon + "OneTrainer" label, placed at (row, column).
     """
+    # Create the frame with a horizontal layout (simpler for one row of widgets)
     frame = QFrame(master)
-    layout = QGridLayout(frame)
+    layout = QHBoxLayout(frame)
     layout.setContentsMargins(0, 0, 0, 0)
     layout.setSpacing(PAD)
-    frame.setLayout(layout)
 
-    if hasattr(master, "layout") and callable(master.layout):
-        # if master's layout is known
-        grid = master.layout()
-        if isinstance(grid, QGridLayout):
-            grid.addWidget(frame, row, column, 1, 1)
-    else:
-        # fallback geometry or something
-        pass
+    # Add the frame to master's grid layout if it exists
+    grid = master.layout()
+    if grid is not None and isinstance(grid, QGridLayout):
+        grid.addWidget(frame, row, column)
 
-    # Icon
+    # Load and process the icon image
     try:
         pil_img = Image.open("resources/icons/icon.png").resize((40, 40), Image.Resampling.LANCZOS)
         pixmap = QPixmap.fromImage(pil_img.toqimage())
@@ -53,12 +49,12 @@ def app_title(master: QWidget, row: int, column: int):
     label_icon = QLabel()
     label_icon.setPixmap(pixmap)
     label_icon.setFixedSize(40, 40)
-    layout.addWidget(label_icon, 0, 0, 1, 1)
+    layout.addWidget(label_icon)
 
     label_text = QLabel("OneTrainer")
-    # no direct "bold" unless we set a QFont
     label_text.setStyleSheet("font-size: 20px; font-weight: bold;")
-    layout.addWidget(label_text, 0, 1, 1, 1)
+    layout.addWidget(label_text)
+
 
 # Should be called create_label()
 def label(
