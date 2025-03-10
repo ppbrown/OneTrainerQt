@@ -480,6 +480,8 @@ class TrainUI(QMainWindow):
 
         grid_container.setLayout(grid_layout)
         vbox.addWidget(grid_container, alignment=Qt.AlignTop | Qt.AlignLeft)
+        # Add a stretch to push the grid to the top so extra space stays empty
+
         vbox.addStretch()
 
         return scroll_area
