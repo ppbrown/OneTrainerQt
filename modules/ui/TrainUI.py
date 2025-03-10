@@ -135,16 +135,10 @@ class TrainUI(QMainWindow):
     # Window Closing
     # -----------------------------------------------------------------------
     def closeEvent(self, event: QCloseEvent):
-        """
-        Called when user closes the window.
-        """
         self.__close()
         event.accept()
 
     def __close(self):
-        """
-        Replaces your old __close() method.
-        """
         self.top_bar_component.save_default()
         # If you'd like to exit the Qt application entirely:
         # self.close()  # not strictly needed if event.accept() was used
@@ -322,7 +316,7 @@ class TrainUI(QMainWindow):
 
     # -----------------------------------------------------------------------
     # Tab creation functions start here
-    # -----------------------------------------------------------------------
+    # --1---------------------------------------------------------------------
     def create_general_tab(self) -> QWidget:
 
         return GeneralTab(self.ui_state)
@@ -388,7 +382,7 @@ class TrainUI(QMainWindow):
         return ConceptTab(self, self.train_config, self.ui_state)
 
     def create_training_tab(self) -> TrainingTab:
-        return TrainingTab(self, self.train_config, self.ui_state)
+        return TrainingTab(self.train_config, self.ui_state)
 
     def create_sampling_tab(self) -> QWidget:
         # In your code, you had some complex structure with "sample after" controls,
@@ -433,43 +427,62 @@ class TrainUI(QMainWindow):
         w.setWidget(container)
         return w
 
+
     def create_tools_tab(self) -> QWidget:
-        w = QScrollArea()
-        w.setWidgetResizable(True)
-        container = QWidget()
-        layout = QGridLayout(container)
+        # We use a widget-inside-a-widget, because QGridLayout is stupid and tries to take
+        # over the whole scroll area.
+        scroll_area = QScrollArea()
+        scroll_container = QWidget()
 
-        # "Open Dataset Tool"
-        label_dataset = QLabel("Dataset Tools")
-        button_dataset = QPushButton("Open")
-        button_dataset.clicked.connect(self.open_dataset_tool)
-        layout.addWidget(label_dataset, 0, 0)
-        layout.addWidget(button_dataset, 0, 1)
+        vbox = QVBoxLayout(scroll_container)
+        vbox.setContentsMargins(0, 0, 0, 0)
+        vbox.setSpacing(10)
+        scroll_area.setWidget(scroll_container)
+        scroll_container.setMinimumWidth(300)
+        scroll_container.setMinimumHeight(200)
+        scroll_container.setLayout(vbox)
 
-        # "Convert Model Tool"
-        label_convert = QLabel("Convert Model Tools")
-        button_convert = QPushButton("Open")
-        button_convert.clicked.connect(self.open_convert_model_tool)
-        layout.addWidget(label_convert, 1, 0)
-        layout.addWidget(button_convert, 1, 1)
+        grid_container = QWidget()
+        grid_layout = QGridLayout(grid_container)
 
-        # "Sampling Tool"
-        label_sampling = QLabel("Sampling Tool")
-        button_sampling = QPushButton("Open")
-        button_sampling.clicked.connect(self.open_sampling_tool)
-        layout.addWidget(label_sampling, 2, 0)
-        layout.addWidget(button_sampling, 2, 1)
+        components.label(
+            grid_container, 0, 0, "Dataset Tools",
+            tooltip="Open the dataset tool for managing your training data"
+        )
+        components.button(
+            grid_container, 0, 1, "Open",
+            command=self.open_dataset_tool
+        )
+        components.label(
+            grid_container, 1, 0, "Convert Model Tools",
+            tooltip="Open the convert model tool for converting models to different formats"
+        )
+        components.button(
+            grid_container, 1, 1, "Open",
+            command=self.open_convert_model_tool
+        )
+        components.label(
+            grid_container, 2, 0, "Sampling Tool",
+            tooltip="Open the sampling tool for generating images from your model"
+        )
+        components.button(
+            grid_container, 2, 1, "Open",
+            command=self.open_sampling_tool
+        )
+        components.label(
+            grid_container, 3, 0, "Profiling Tool",
+            tooltip="Open the profiling tool for analyzing your model's performance"
+        )
+        components.button(
+            grid_container, 3, 1, "Open",
+            command=self.open_profiling_tool
+        )
 
-        # "Profiling Tool"
-        label_profiling = QLabel("Profiling Tool")
-        button_profiling = QPushButton("Open")
-        button_profiling.clicked.connect(self.open_profiling_tool)
-        layout.addWidget(label_profiling, 3, 0)
-        layout.addWidget(button_profiling, 3, 1)
+        grid_container.setLayout(grid_layout)
+        vbox.addWidget(grid_container, alignment=Qt.AlignTop | Qt.AlignLeft)
+        vbox.addStretch()
 
-        container.setLayout(layout)
-        w.setWidget(container)
-        return w
+        return scroll_area
 
     def create_additional_embeddings_tab(self) -> QWidget:
         # AdditionalEmbeddingsTab(...) is presumably your own QWidget-based class
