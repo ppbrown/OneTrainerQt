@@ -1,4 +1,7 @@
-# ui_utils.py
+"""
+    
+    It provides a set of functions to create and manage UI components such as labels, buttons, text fields, and more.
+"""
 
 import os
 from typing import Any, Callable
@@ -56,7 +59,7 @@ def app_title(master: QWidget, row: int, column: int):
     label_text.setStyleSheet("font-size: 20px; font-weight: bold;")
     layout.addWidget(label_text, 0, 1, 1, 1)
 
-
+# Should be called create_label()
 def label(
     master: QWidget,
     row: int,
@@ -82,7 +85,7 @@ def label(
 
     return lbl
 
-
+# Should be called create_textentry()
 def entry(
     master: QWidget,
     row: int,
@@ -281,7 +284,7 @@ def icon_button(master: QWidget, row: int, column: int, text: str, command: Call
     btn.clicked.connect(command)
     return btn
 
-
+# Should be called create_button()
 def button(
     master: QWidget,
     row: int, column: int,
@@ -300,7 +303,7 @@ def button(
 
     return btn
 
-
+# Should be called create_options_box()
 def options(
     master: QWidget,
     row: int,
@@ -448,7 +451,7 @@ def options_kv(
 
     return combo
 
-
+# Should be called create_toggleswitch()
 def switch(
     master: QWidget,
     row: int,
@@ -492,7 +495,7 @@ def progress(master: QWidget, row: int, column: int):
         grid.addWidget(prog, row, column)
     return prog
 
-
+# Should be called create_double_progress_bars()
 def double_progress(master: QWidget, row: int, column: int, label_1: str, label_2: str):
     """
     Creates two labeled QProgressBars side by side (vertical stack).
