@@ -6,7 +6,7 @@ import contextlib
 from abc import ABC, abstractmethod
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QFrame,
+    QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QFrame, QDialog,
     QScrollArea, QPushButton, QComboBox, QLayout, QInputDialog
 )
 from PySide6.QtCore import Qt
@@ -370,7 +370,10 @@ class ConfigList(ABC):
         print(f"DEBUG:  __open_element_window({i})")
         w = self.open_element_window(i, ui_state)
         if w:
-            w.show()  # or w.exec_() if it's a QDialog
+            if isinstance(w, QDialog):
+                w.exec()
+            else:
+                w.show()  # or w.exec_() if it's a QDialog
         # Then reconfigure
         # If we keep references to the widget in a list, we can call configure_element() if needed
         self.__save_current_config()
