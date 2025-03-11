@@ -36,7 +36,7 @@ class SamplingTab(ConfigList):
 
     def create_widget(self, parent_widget, element, i, open_command, remove_command, clone_command, save_command):
 
-        return SampleWidget(parent_widget, element, i, open_command, remove_command, clone_command, save_command)
+        return SampleWidget(element, i, open_command, remove_command, clone_command, save_command)
 
     def create_new_element(self) -> dict:
 
@@ -53,7 +53,7 @@ class SampleWidget(QFrame):
     Lays out controls for a single sample in a row: 
       [X] [ + ] [switch] [width] [height] [seed] [prompt] [...]
     """
-    def __init__(self, parent, element, i, open_command, remove_command, clone_command, save_command):
+    def __init__(self, element, i, open_command, remove_command, clone_command, save_command):
         super().__init__()
 
         self.element = element

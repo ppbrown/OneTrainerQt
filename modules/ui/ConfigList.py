@@ -356,15 +356,10 @@ class ConfigList(ABC):
     # Opening element windows
     # -----------------------------------------------------------------------
     def __open_element_window(self, i, ui_state):
-        """
-        The original code calls self.open_element_window(...) then does:
-          self.master.wait_window(window)
-        In Qt, we typically do window.exec().
-        Then we call the widget's configure_element() and save.
-        """
+        print(f"DEBUG:  __open_element_window({i})")
         w = self.open_element_window(i, ui_state)
         if w:
-            w.exec()  # or w.show() if you want modeless
+            w.show()  # or w.exec_() if it's a QDialog
         # Then reconfigure
         # If we keep references to the widget in a list, we can call configure_element() if needed
         self.__save_current_config()

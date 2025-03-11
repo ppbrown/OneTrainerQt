@@ -9,6 +9,8 @@ from PySide6.QtCore import Qt
 from modules.util.config.SampleConfig import SampleConfig
 from modules.util.enum.NoiseScheduler import NoiseScheduler
 from modules.util.ui.UIState import UIState
+from modules.util.ui import components
+
 
 
 class SampleFrame(QFrame):
@@ -26,7 +28,7 @@ class SampleFrame(QFrame):
         include_prompt: bool = True,
         include_settings: bool = True,
     ):
-        super().__init__(parent)
+        super().__init__()
 
         self.sample = sample
         self.ui_state = ui_state
@@ -65,112 +67,85 @@ class SampleFrame(QFrame):
             self.layout_main.addWidget(self.bottom_frame, row_index, 0, 1, 1, alignment=Qt.AlignTop)
             row_index += 1
 
-        # Now replicate your "components" calls with standard Qt:
-        if self.include_prompt:
+        top_frame = self.top_frame if self.include_prompt else None
+        bottom_frame = self.bottom_frame if self.include_settings else None
+
+        if include_prompt:
             # prompt
-            lbl_prompt = QLabel("prompt:")
-            self.top_frame_layout.addWidget(lbl_prompt, 0, 0)
-            self.prompt_line = QLineEdit()
-            self.top_frame_layout.addWidget(self.prompt_line, 0, 1)
+            components.label(top_frame, 0, 0, "prompt:")
+            components.entry(top_frame, 0, 1, self.ui_state, "prompt", width=600)
 
             # negative prompt
-            lbl_negative = QLabel("negative prompt:")
-            self.top_frame_layout.addWidget(lbl_negative, 1, 0)
-            self.negative_line = QLineEdit()
-            self.top_frame_layout.addWidget(self.negative_line, 1, 1)
+            components.label(top_frame, 1, 0, "negative prompt:")
+            components.entry(top_frame, 1, 1, self.ui_state, "negative_prompt", width=600)
 
-        if self.include_settings:
-            # row0: width, height
-            lbl_width = QLabel("width:")
-            self.bottom_frame_layout.addWidget(lbl_width, 0, 0)
-            self.width_line = QLineEdit()
-            self.bottom_frame_layout.addWidget(self.width_line, 0, 1)
+        if include_settings:
+            # width
+            components.label(bottom_frame, 0, 0, "width:")
+            components.entry(bottom_frame, 0, 1, self.ui_state, "width")
 
-            lbl_height = QLabel("height:")
-            self.bottom_frame_layout.addWidget(lbl_height, 0, 2)
-            self.height_line = QLineEdit()
-            self.bottom_frame_layout.addWidget(self.height_line, 0, 3)
+            # height
+            components.label(bottom_frame, 0, 2, "height:")
+            components.entry(bottom_frame, 0, 3, self.ui_state, "height")
 
-            # row1: frames, length
-            lbl_frames = QLabel("frames:")
-            lbl_frames.setToolTip("Number of frames to generate (for videos).")
-            self.bottom_frame_layout.addWidget(lbl_frames, 1, 0)
-            self.frames_line = QLineEdit()
-            self.bottom_frame_layout.addWidget(self.frames_line, 1, 1)
+            # frames
+            components.label(bottom_frame, 1, 0, "frames:",
+                             tooltip="Number of frames to generate. Only used when generating videos.")
+            components.entry(bottom_frame, 1, 1, self.ui_state, "frames")
 
-            lbl_length = QLabel("length:")
-            lbl_length.setToolTip("Length in seconds of audio output.")
-            self.bottom_frame_layout.addWidget(lbl_length, 1, 2)
-            self.length_line = QLineEdit()
-            self.bottom_frame_layout.addWidget(self.length_line, 1, 3)
+            # length
+            components.label(bottom_frame, 1, 2, "length:",
+                             tooltip="Length in seconds of audio output.")
+            components.entry(bottom_frame, 1, 3, self.ui_state, "length")
 
-            # row2: seed, random seed
-            lbl_seed = QLabel("seed:")
-            self.bottom_frame_layout.addWidget(lbl_seed, 2, 0)
-            self.seed_line = QLineEdit()
-            self.bottom_frame_layout.addWidget(self.seed_line, 2, 1)
+            # seed
+            components.label(bottom_frame, 2, 0, "seed:")
+            components.entry(bottom_frame, 2, 1, self.ui_state, "seed")
 
-            lbl_random_seed = QLabel("random seed:")
-            self.bottom_frame_layout.addWidget(lbl_random_seed, 2, 2)
-            self.random_seed_check = QCheckBox()
-            self.bottom_frame_layout.addWidget(self.random_seed_check, 2, 3)
+            # random seed
+            components.label(bottom_frame, 2, 2, "random seed:")
+            components.switch(bottom_frame, 2, 3, self.ui_state, "random_seed")
 
-            # row3: cfg scale
-            lbl_cfg = QLabel("cfg scale:")
-            self.bottom_frame_layout.addWidget(lbl_cfg, 3, 0)
-            self.cfg_line = QLineEdit()
-            self.bottom_frame_layout.addWidget(self.cfg_line, 3, 1)
+            # cfg scale
+            components.label(bottom_frame, 3, 0, "cfg scale:")
+            components.entry(bottom_frame, 3, 1, self.ui_state, "cfg_scale")
 
-            # row4: steps, sampler
-            lbl_steps = QLabel("steps:")
-            self.bottom_frame_layout.addWidget(lbl_steps, 4, 0)
-            self.steps_line = QLineEdit()
-            self.bottom_frame_layout.addWidget(self.steps_line, 4, 1)
+            # sampler
+            components.label(bottom_frame, 4, 2, "sampler:")
+            components.options_kv(bottom_frame, 4, 3, [
+                ("DDIM", NoiseScheduler.DDIM),
+                ("Euler", NoiseScheduler.EULER),
+                ("Euler A", NoiseScheduler.EULER_A),
+                # ("DPM++", NoiseScheduler.DPMPP), # TODO: produces noisy samples
+                # ("DPM++ SDE", NoiseScheduler.DPMPP_SDE), # TODO: produces noisy samples
+                ("UniPC", NoiseScheduler.UNIPC),
+                ("Euler Karras", NoiseScheduler.EULER_KARRAS),
+                ("DPM++ Karras", NoiseScheduler.DPMPP_KARRAS),
+                ("DPM++ SDE Karras", NoiseScheduler.DPMPP_SDE_KARRAS),
+                # ("UniPC Karras", NoiseScheduler.UNIPC_KARRAS),# TODO: update diffusers to fix UNIPC_KARRAS (see https://github.com/huggingface/diffusers/pull/4581)
+            ], self.ui_state, "noise_scheduler")
 
-            lbl_sampler = QLabel("sampler:")
-            self.bottom_frame_layout.addWidget(lbl_sampler, 4, 2)
-            self.sampler_combo = QComboBox()
-            # add noise schedulers
-            # e.g. for sched in [NoiseScheduler.DDIM, NoiseScheduler.EULER, ...]
-            self.sampler_combo.addItem("DDIM", NoiseScheduler.DDIM)
-            self.sampler_combo.addItem("Euler", NoiseScheduler.EULER)
-            self.sampler_combo.addItem("Euler A", NoiseScheduler.EULER_A)
-            self.sampler_combo.addItem("UniPC", NoiseScheduler.UNIPC)
-            self.sampler_combo.addItem("Euler Karras", NoiseScheduler.EULER_KARRAS)
-            self.sampler_combo.addItem("DPM++ Karras", NoiseScheduler.DPMPP_KARRAS)
-            self.sampler_combo.addItem("DPM++ SDE Karras", NoiseScheduler.DPMPP_SDE_KARRAS)
-            self.bottom_frame_layout.addWidget(self.sampler_combo, 4, 3)
+            # steps
+            components.label(bottom_frame, 4, 0, "steps:")
+            components.entry(bottom_frame, 4, 1, self.ui_state, "diffusion_steps")
 
-            # row5: inpainting
-            lbl_inpainting = QLabel("inpainting:")
-            lbl_inpainting.setToolTip("Enables inpainting sampling if using an inpainting model.")
-            self.bottom_frame_layout.addWidget(lbl_inpainting, 5, 0)
-            self.inpaint_check = QCheckBox()
-            self.bottom_frame_layout.addWidget(self.inpaint_check, 5, 1)
+            # inpainting
+            components.label(bottom_frame, 5, 0, "inpainting:",
+                             tooltip="Enables inpainting sampling. Only available when sampling from an inpainting model.")
+            components.switch(bottom_frame, 5, 1, self.ui_state, "sample_inpainting")
 
-            # row6: base image path
-            lbl_base_image = QLabel("base image path:")
-            lbl_base_image.setToolTip("The base image used for inpainting.")
-            self.bottom_frame_layout.addWidget(lbl_base_image, 6, 0, 1, 1)
-            self.base_image_line = QLineEdit()
-            self.bottom_frame_layout.addWidget(self.base_image_line, 6, 1, 1, 3)
-            # if you want a "browse" button:
-            # we can do:
-            # self.base_image_browse = QPushButton("Browse")
-            # self.bottom_frame_layout.addWidget(self.base_image_browse, 6, 4)
-            # self.base_image_browse.clicked.connect(self.__browse_base_image)
+            # base image path
+            components.label(bottom_frame, 6, 0, "base image path:",
+                             tooltip="The base image used when inpainting.")
+            components.file_entry(bottom_frame, 6, 1, self.ui_state, "base_image_path",
+                                  allow_model_files=False,
+                                  allow_image_files=True,
+                                  )
 
-            # row7: mask image path
-            lbl_mask_image = QLabel("mask image path:")
-            lbl_mask_image.setToolTip("The mask used for inpainting.")
-            self.bottom_frame_layout.addWidget(lbl_mask_image, 7, 2)
-            self.mask_image_line = QLineEdit()
-            self.bottom_frame_layout.addWidget(self.mask_image_line, 7, 3)
-
-    # If you want a browse function:
-    # def __browse_base_image(self):
-    #     file_dialog = QFileDialog(self, "Select Base Image")
-    #     file_dialog.setNameFilter("Images (*.png *.jpg *.jpeg *.bmp)")
-    #     if file_dialog.exec() == QFileDialog.Accepted:
-    #         selected = file_dialog.selectedFiles()[0]
-    #         self.base_image_line.setText(selected)
+            # mask image path
+            components.label(bottom_frame, 7, 2, "mask image path:",
+                             tooltip="The mask used when inpainting.")
+            components.file_entry(bottom_frame, 7, 3, self.ui_state, "mask_image_path",
+                                  allow_model_files=False,
+                                  allow_image_files=True,
+                                  )

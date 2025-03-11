@@ -13,7 +13,7 @@ from modules.util.ui.UIState import UIState
 
 class SampleParamsWindow(QDialog):
     def __init__(self, parent, sample: SampleConfig, ui_state: UIState, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
+        super().__init__()
 
         self.sample = sample
         self.ui_state = ui_state

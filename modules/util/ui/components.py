@@ -128,7 +128,7 @@ def entry(
     command: Callable[[], None] = None,
     tooltip: str = "",
     wide_tooltip: bool = False,
-    width: int = 140,
+    width: int = 140, # in pixels
     sticky: str = "new",
 ):
     """
