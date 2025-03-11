@@ -29,6 +29,7 @@ class ConfigList(ABC):
     It should probably be rewritten to be a QWidgets-based class, or have an explicit,
     "Set up sub-widgets and return a top-level widget" method.
 
+    Class methods:
     """
 
     def __init__(
@@ -262,6 +263,7 @@ class ConfigList(ABC):
                         self.configs_dropdown.setCurrentIndex(idx)
                         break
 
+    # Wrapper around child class create_new_element()
     def __add_element(self):
         i = len(self.current_config)
         if i == 0:
@@ -274,6 +276,9 @@ class ConfigList(ABC):
         new_element = self.create_new_element()
         self.current_config.append(new_element)
 
+        # A virtual call to the child class defined function of create_widget()
+        # But isnt passing these functions back and forth a bit pointless?
+        # The child class should already know these functions?
         w = self.create_widget(
             self.scroll_content,
             new_element,
@@ -368,9 +373,11 @@ class ConfigList(ABC):
                 print(f"Error saving config to {path}: {e}")
 
     # -----------------------------------------------------------------------
-    # Opening element windows
+    # Wrapper around child class open_element_window()
+    # which edits properties of a specific element
     # -----------------------------------------------------------------------
     def __open_element_window(self, i, ui_state):
+        print("DEBUG: __open_element_window called with i =", i)
         w = self.open_element_window(i, ui_state)
         if w:
             if isinstance(w, QDialog):

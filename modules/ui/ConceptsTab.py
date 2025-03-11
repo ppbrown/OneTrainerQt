@@ -47,17 +47,11 @@ class ConceptsTab(ConfigList):
         return ConceptWidget(parent_widget, element, i, open_command, remove_command, clone_command, save_command)
 
     def create_new_element(self) -> dict:
-        """
-        Return a new concept config dict (the default).
-        """
         return ConceptConfig.default_values()
 
     def open_element_window(self, i, ui_state) -> QDialog:
-        """
-        The original code returned ctk.CTkToplevel. We'll return a QDialog instead.
-        We'll assume ConceptWindow is also converted to PySide6.
-        """
         # ui_state is a tuple: (self.ui_state, self.image_ui_state, self.text_ui_state)
+        print("DEBUG: Opening concept window for index", i)
         return ConceptWindow(self, self.current_config[i], ui_state[0], ui_state[1], ui_state[2])
 
 
@@ -142,13 +136,9 @@ class ConceptWidget(QFrame):
         print("DEBUG: ConceptWidget mousePressEvent")
 
         # If within the 150x150 area, we interpret it as a click on the image
-        # Original code used <Button-1> on the label. We'll replicate that logic:
         pos = event.pos()
         if 0 <= pos.x() < 150 and 0 <= pos.y() < 150:
-            # open the concept
-            # we do not have direct references to open_command, but we can store it as a property
-            # or we can connect a signal. For simplicity, let's store it:
-            # The original code: open_command(self.i, (self.ui_state, self.image_ui_state, self.text_ui_state))
+            # open the concept edit window
             if event.button() == Qt.LeftButton and hasattr(self, 'open_command'):
                 self.open_command(self.i, (self.ui_state, self.image_ui_state, self.text_ui_state))
 

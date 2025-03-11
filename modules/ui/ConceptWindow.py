@@ -39,10 +39,6 @@ from mgds.pipelineModuleTypes.RandomAccessPipelineModule import RandomAccessPipe
 
 
 class InputPipelineModule(PipelineModule, RandomAccessPipelineModule):
-    """
-    Equivalent to your original InputPipelineModule,
-    just kept the same logic as the code does not rely on ctk.
-    """
     def __init__(self, data: dict):
         super().__init__()
         self.data = data
@@ -61,10 +57,6 @@ class InputPipelineModule(PipelineModule, RandomAccessPipelineModule):
 
 
 class ConceptWindow(QDialog):
-    """
-    PySide6 conversion of your customtkinter-based ConceptWindow.
-    """
-
     def __init__(
         self,
         parent,
