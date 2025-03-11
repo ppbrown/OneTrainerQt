@@ -12,18 +12,11 @@ from modules.util.config.TrainConfig import TrainConfig
 from modules.util.config.TrainConfig import TrainEmbeddingConfig
 from modules.util.ui.UIState import UIState
 
-# qtside conversion warning:
-# this typing is a rushjob just to get the UI to display
-# This needs to be properly converted to PySide6
-# class AdditionalEmbeddingsTab(ConfigList):
-class AdditionalEmbeddingsTab(QWidget):
-    """
-    PySide6 adaptation of your AdditionalEmbeddingsTab, which inherits from ConfigList.
-    """
+
+class AdditionalEmbeddingsTab(ConfigList):
 
     def __init__(self, parent, train_config, ui_state):
-        super().__init__()
-        """
+
         super().__init__(
             master=parent,
             train_config=train_config,
@@ -33,7 +26,7 @@ class AdditionalEmbeddingsTab(QWidget):
             add_button_text="add embedding",
             is_full_width=True
         )
-        """
+
         self.parent = parent
         self.train_config = train_config
         self.ui_state = ui_state
@@ -66,13 +59,12 @@ class AdditionalEmbeddingsTab(QWidget):
 
 class EmbeddingWidget(QFrame):
     """
-    PySide6 version of your ctk.CTkFrame-based EmbeddingWidget.
     Displays row for each embedding:
       top_frame: close [+], base embedding, placeholder, token_count
       bottom_frame: train, output embedding, stop training after, etc.
     """
     def __init__(self, parent, element, i, open_command, remove_command, clone_command, save_command):
-        super().__init__(parent)
+        super().__init__()
 
         self.element = element
         self.ui_state = UIState(self, element)

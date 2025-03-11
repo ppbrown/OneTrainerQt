@@ -528,8 +528,16 @@ class TrainUI(QMainWindow):
         return scroll_area
 
     def create_additional_embeddings_tab(self) -> QWidget:
-        # AdditionalEmbeddingsTab(...) is presumably your own QWidget-based class
-        return AdditionalEmbeddingsTab(self, self.train_config, self.ui_state)
+        container = QFrame()
+        container_layout = QGridLayout(container)
+        container_layout.setContentsMargins(5, 5, 5, 5)
+        container_layout.setSpacing(5)
+        container.setLayout(container_layout)
+
+        # legacy ugliness that creates the real contents behind the scenes
+        self.additionalembeddings_configlist =AdditionalEmbeddingsTab(container, self.train_config, self.ui_state)
+
+        return container
 
     def create_cloud_tab(self) -> QWidget:
         # CloudTab(...) is presumably your own QWidget-based class
