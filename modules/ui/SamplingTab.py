@@ -12,13 +12,10 @@ from modules.util.config.TrainConfig import TrainConfig
 from modules.util.ui.UIState import UIState
 
 
-# This init does not actually create a tab.
-# It only sets up a struct with some key info
-class SamplingTab(ConfigList):    
-    """
-    A PySide6-based equivalent to your customtkinter-based SamplingTab.
-    Inherits from ConfigList, presumably also adapted for PySide6.
-    """
+# This inherits from ConfigList, which is a special abstract class that should be redesigned.
+# It breaks good object oriented design, by being forced to init things OUTSIDE of itself, via
+# its init method. This is a bad design pattern, and should be refactored.
+class SamplingTab(ConfigList):
     def __init__(self, parent, train_config, ui_state):
         
         super().__init__(
