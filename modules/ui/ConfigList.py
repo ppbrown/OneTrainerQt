@@ -206,6 +206,7 @@ class ConfigList(ABC):
                 self.__save_current_config
             )
             self.scroll_layout.addWidget(w)
+        self.scroll_layout.addStretch()
 
     # -----------------------------------------------------------------------
     # External-file config loading
@@ -259,6 +260,13 @@ class ConfigList(ABC):
     def __add_element(self):
         print("DEBUG:  __add_element")
         i = len(self.current_config)
+        if i == 0:
+            # We keep a magic invisible Stretch component at the end,
+            # to make the layout prettier.
+            self.scroll_layout.addStretch()
+        else:
+            i = i - 1
+        
         new_element = self.create_new_element()
         self.current_config.append(new_element)
 
@@ -271,7 +279,10 @@ class ConfigList(ABC):
             self.__clone_element,
             self.__save_current_config
         )
-        self.scroll_layout.addWidget(w)
+        # self.scroll_layout.addWidget(w)
+        # maintain the Stretch component at the end
+        self.scroll_layout.insertWidget(vbox.count() - 1, w)
+
 
         self.__save_current_config()
 
