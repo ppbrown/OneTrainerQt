@@ -37,7 +37,7 @@ from modules.trainer.GenericTrainer import GenericTrainer
 from modules.ui.AdditionalEmbeddingsTab import AdditionalEmbeddingsTab
 from modules.ui.CaptionUI import CaptionUI
 from modules.ui.CloudTab import CloudTab
-from modules.ui.ConceptTab import ConceptTab
+from modules.ui.ConceptsTab import ConceptsTab
 from modules.ui.ConvertModelUI import ConvertModelUI
 from modules.ui.GeneralTab import GeneralTab
 from modules.ui.LoraTab import LoraTab
@@ -363,8 +363,15 @@ class TrainUI(QMainWindow):
 
 
     def create_concepts_tab(self) -> QWidget:
-        # In your code: ConceptTab(master, self.train_config, self.ui_state)
-        return ConceptTab(self, self.train_config, self.ui_state)
+        container = QFrame()
+        container_layout = QGridLayout(container)
+        container_layout.setContentsMargins(5, 5, 5, 5)
+        container_layout.setSpacing(5)
+        container.setLayout(container_layout)
+
+        # legacy ugliness that creates the real contents behind the scenes
+        self.conceptstab_configlist = ConceptsTab(container, self.train_config, self.ui_state)
+        return container
 
     def create_training_tab(self) -> TrainingTab:
         return TrainingTab(self.train_config, self.ui_state)

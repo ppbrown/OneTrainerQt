@@ -28,8 +28,7 @@ from modules.util.ui.UIState import UIState
 class ConceptsTab(ConfigList):
 
     def __init__(self, parent: QWidget, train_config: TrainConfig, ui_state: UIState):
-        QWidget.__init__(self)
-        super.__init__(
+        super().__init__(
             master=parent,
             train_config=train_config,
             ui_state=ui_state,

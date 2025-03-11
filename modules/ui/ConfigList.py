@@ -263,7 +263,6 @@ class ConfigList(ABC):
                         break
 
     def __add_element(self):
-        print("DEBUG:  __add_element")
         i = len(self.current_config)
         if i == 0:
             # We keep a magic invisible Stretch component at the end,
@@ -372,7 +371,6 @@ class ConfigList(ABC):
     # Opening element windows
     # -----------------------------------------------------------------------
     def __open_element_window(self, i, ui_state):
-        print(f"DEBUG:  __open_element_window({i})")
         w = self.open_element_window(i, ui_state)
         if w:
             if isinstance(w, QDialog):
