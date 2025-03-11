@@ -19,11 +19,16 @@ from modules.util.ui.UIState import UIState
 
 class ConfigList(ABC):
     """
-    ABbstract class that manages a list of config elements (of type BaseConfig)
+    Abstract class that manages a list of config elements (of type BaseConfig)
     Child classes must implement create_widget() and create_new_element().
     In additiona to handling a list of elements, this class may also handle loading and saving them
     to an external file. In which case, it organized named "configs" of elements.
     The configs can be saved to external .json files.
+
+    This class should REALLY be redesigned.
+    It should probably be rewritten to be a QWidgets-based class, or have an explicit,
+    "Set up sub-widgets and return a top-level widget" method.
+
     """
 
     def __init__(
@@ -83,7 +88,7 @@ class ConfigList(ABC):
         self.scroll_layout = QVBoxLayout(self.scroll_content)
         self.scroll_layout.setSizeConstraint(QLayout.SetMinimumSize)
         self.scroll_area.setWidget(self.scroll_content)
-        
+
         self.master_layout.addWidget(self.scroll_area)
 
         # This is where we store the actual config list elements
@@ -266,7 +271,7 @@ class ConfigList(ABC):
             self.scroll_layout.addStretch()
         else:
             i = i - 1
-        
+
         new_element = self.create_new_element()
         self.current_config.append(new_element)
 
@@ -281,7 +286,7 @@ class ConfigList(ABC):
         )
         # self.scroll_layout.addWidget(w)
         # maintain the Stretch component at the end
-        self.scroll_layout.insertWidget(vbox.count() - 1, w)
+        self.scroll_layout.insertWidget(self.scroll_layout.count() - 1, w)
 
 
         self.__save_current_config()
