@@ -149,6 +149,8 @@ class ConfigList(ABC):
     def open_element_window(self, i, ui_state):
         """
         Open a window/dialog for editing the i-th element. Return the dialog.
+        (This is expected to be called by __open_element_window(),
+         which will activate the dialog widget)
         """
 
     # -----------------------------------------------------------------------
@@ -377,13 +379,16 @@ class ConfigList(ABC):
     # which edits properties of a specific element
     # -----------------------------------------------------------------------
     def __open_element_window(self, i, ui_state):
-        print("DEBUG: __open_element_window called with i =", i)
+        print("DEBUG: ConfigList.__open_element_window called with i =", i)
         w = self.open_element_window(i, ui_state)
+        
+        print("DEBUG: ConfigList attempting to actually open element window")
         if w:
             if isinstance(w, QDialog):
                 w.exec()
             else:
                 w.show()  # or w.exec_() if it's a QDialog
+        print("DEBUG: Finished opening element window.")
         # Then reconfigure
         # If we keep references to the widget in a list, we can call configure_element() if needed
         self.__save_current_config()

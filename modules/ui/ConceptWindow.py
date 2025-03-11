@@ -67,7 +67,7 @@ class ConceptWindow(QDialog):
         *args,
         **kwargs
     ):
-        super().__init__(parent, *args, **kwargs)
+        super().__init__()
 
         self.concept = concept
         self.ui_state = ui_state

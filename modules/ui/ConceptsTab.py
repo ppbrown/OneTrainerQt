@@ -51,8 +51,8 @@ class ConceptsTab(ConfigList):
 
     def open_element_window(self, i, ui_state) -> QDialog:
         # ui_state is a tuple: (self.ui_state, self.image_ui_state, self.text_ui_state)
-        print("DEBUG: Opening concept window for index", i)
-        return ConceptWindow(self, self.current_config[i], ui_state[0], ui_state[1], ui_state[2])
+        print("DEBUG: ConceptsTab returning concept window for index", i)
+        return ConceptWindow(self, self.master, self.current_config[i], ui_state[0], ui_state[1], ui_state[2])
 
 
 class ConceptWidget(QFrame):
@@ -72,6 +72,10 @@ class ConceptWidget(QFrame):
         self.image_ui_state = UIState(self, concept.image)
         self.text_ui_state = UIState(self, concept.text)
         self.i = i
+        self.open_command = open_command
+        self.remove_command = remove_command
+        self.clone_command = clone_command
+        self.save_command = save_command
 
         # We'll use a QGridLayout to replicate the 2-row approach: 
         #   row0 = image, row1 = name label 
@@ -139,7 +143,7 @@ class ConceptWidget(QFrame):
         pos = event.pos()
         if 0 <= pos.x() < 150 and 0 <= pos.y() < 150:
             # open the concept edit window
-            if event.button() == Qt.LeftButton and hasattr(self, 'open_command'):
+            if event.button() == Qt.LeftButton:
                 self.open_command(self.i, (self.ui_state, self.image_ui_state, self.text_ui_state))
 
 
