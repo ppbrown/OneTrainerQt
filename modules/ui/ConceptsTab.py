@@ -21,19 +21,15 @@ from modules.util.ui.UIState import UIState
 
 
 # pyside6 conversion warning:
-# Current typing is a hackjob. This class needs to be redesigned to be 
+# Current typing is a hackjob, because of the original code's design.
+# The init routine creates and manipulates things outside itself, violating OOP.
+# This class needs to be redesigned to be 
 # a proper QWidget with a layout and proper signal/slot connections.
-# Current code is just to allow the UI to be displayed.
-# class ConceptTab(QWidget """, ConfigList"""):
-class ConceptTab(QWidget):
-    """
-    PySide6 version of your ConceptTab, which inherits from a custom 'ConfigList'.
-    We assume 'ConfigList' has been converted to PySide6 as well.
-    """
+class ConceptsTab(ConfigList):
+
     def __init__(self, parent: QWidget, train_config: TrainConfig, ui_state: UIState):
         QWidget.__init__(self)
-        """
-        ConfigList.__init__(
+        super.__init__(
             master=parent,
             train_config=train_config,
             ui_state=ui_state,
@@ -43,7 +39,7 @@ class ConceptTab(QWidget):
             default_config_name="concepts.json",
             add_button_text="add concept",
             is_full_width=False,
-        )"""
+        )
 
     def create_widget(self, parent_widget: QWidget, element, i, open_command, remove_command, clone_command, save_command):
         """
@@ -68,7 +64,6 @@ class ConceptTab(QWidget):
 
 class ConceptWidget(QFrame):
     """
-    PySide6 version of your 'ConceptWidget', originally a ctk.CTkFrame.
     Displays:
       - A 150x150 preview image
       - A name label
@@ -78,7 +73,7 @@ class ConceptWidget(QFrame):
     and calls commands passed from the parent.
     """
     def __init__(self, parent: QWidget, concept, i, open_command, remove_command, clone_command, save_command):
-        super().__init__(parent)
+        super().__init__()
         self.concept = concept
         self.ui_state = UIState(self, concept)
         self.image_ui_state = UIState(self, concept.image)
@@ -89,8 +84,7 @@ class ConceptWidget(QFrame):
         #   row0 = image, row1 = name label 
         # plus absolute positioning for close/clone/switch if we want to replicate .place(...).
         self.setFrameShape(QFrame.StyledPanel)
-        self.setFixedSize(150, 170)  # matches (width=150, height=170)
-
+        self.setFixedSize(150, 170)
         self.grid_layout = QGridLayout(self)
         self.grid_layout.setContentsMargins(0, 0, 0, 0)
         self.grid_layout.setHorizontalSpacing(0)
@@ -111,6 +105,7 @@ class ConceptWidget(QFrame):
         self._pixmap = self._get_preview_pixmap()
         self.image_label.setPixmap(self._pixmap)
         self.image_label.setScaledContents(True)
+
         # We'll connect a mousePressEvent or use eventFilter. 
         # For the original "bind <Button-1>", let's do a mousePressEvent override.
 
@@ -145,6 +140,8 @@ class ConceptWidget(QFrame):
         If the user clicks on the image area, call the open_command.
         We'll check if the click is within the image's rectangle.
         """
+        print("DEBUG: ConceptWidget mousePressEvent")
+
         # If within the 150x150 area, we interpret it as a click on the image
         # Original code used <Button-1> on the label. We'll replicate that logic:
         pos = event.pos()
@@ -156,7 +153,6 @@ class ConceptWidget(QFrame):
             if event.button() == Qt.LeftButton and hasattr(self, 'open_command'):
                 self.open_command(self.i, (self.ui_state, self.image_ui_state, self.text_ui_state))
 
-        super().mousePressEvent(event)
 
     def set_open_command(self, func):
         """
