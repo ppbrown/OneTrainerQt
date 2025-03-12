@@ -1,16 +1,14 @@
 # generate_captions_window.py
 
-""" Conversion warning:
-  This file has been converted from a customtkinter-based UI to a PySide6-based QDialog.
-  Adjust layout or widget sizing as you prefer. In Qt, using layout-based sizing is usually recommended.
-Replace references to self.parent with signals/slots or direct method calls as needed 
-(since in Qt, “parent” typically refers to the QWidget parent, which might not contain 
- all the same methods as your old parent window).
+"""
+Generates a pop-up window related to the CaptionsUI/data tools window,
+specific to actually generating captions for a folder of images.
+
 """
 
 import os
 from PySide6.QtWidgets import (
-    QMainWindow, QLabel, QLineEdit, QComboBox,
+    QMainWindow, QWidget, QLabel, QLineEdit, QComboBox,
     QPushButton, QCheckBox, QProgressBar,
     QFileDialog, QGridLayout, QVBoxLayout
 )
@@ -39,11 +37,12 @@ class GenerateCaptionsWindow(QMainWindow):
         self.models = ["Blip", "Blip2", "WD14 VIT v2"]
         self.modes = ["Replace all captions", "Create if absent", "Add as new line"]
 
-        # ---------------------------------------------------------------------
+        central_widget = QWidget(self)
+        self.setCentralWidget(central_widget)
+
         # Main layout
-        # ---------------------------------------------------------------------
         layout = QVBoxLayout()
-        self.setLayout(layout)
+        central_widget.setLayout(layout)
 
         # We’ll use a QGridLayout for row/column alignment
         grid = QGridLayout()

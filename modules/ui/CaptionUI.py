@@ -651,7 +651,10 @@ class CaptionUI(QMainWindow):
 
     def open_caption_window(self):
         dialog = GenerateCaptionsWindow(self, self.dir, self.config_ui_data["include_subdirectories"])
-        dialog.exec()
+        if hasattr(dialog, "exec"):
+            dialog.exec()
+        else:
+            dialog.show()
         self.switch_image(self.current_image_index)
 
     def open_in_explorer(self):
