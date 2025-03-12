@@ -51,9 +51,9 @@ class ConceptsTab(ConfigList):
 
     def open_element_window(self, i, ui_state) -> QDialog:
         # ui_state is a tuple: (self.ui_state, self.image_ui_state, self.text_ui_state)
-        print("DEBUG: ConceptsTab returning concept window for index", i)
-        return ConceptWindow(self, self.master, self.current_config[i], ui_state[0], ui_state[1], ui_state[2])
+        return ConceptWindow(self.master, self.current_config[i], ui_state[0], ui_state[1], ui_state[2])
 
+import traceback
 
 class ConceptWidget(QFrame):
     """
@@ -132,6 +132,8 @@ class ConceptWidget(QFrame):
         self.enabled_switch.setChecked(bool(self.concept.enabled))
         self.enabled_switch.stateChanged.connect(lambda _: save_command())
 
+
+
     def mousePressEvent(self, event):
         """
         If the user clicks on the image area, call the open_command.
@@ -143,8 +145,13 @@ class ConceptWidget(QFrame):
         pos = event.pos()
         if 0 <= pos.x() < 150 and 0 <= pos.y() < 150:
             # open the concept edit window
-            if event.button() == Qt.LeftButton:
-                self.open_command(self.i, (self.ui_state, self.image_ui_state, self.text_ui_state))
+            try:
+                if event.button() == Qt.LeftButton:
+                    self.open_command(self.i, (self.ui_state, self.image_ui_state, self.text_ui_state))
+            except Exception:
+                traceback.print_exc()
+                raise
+
 
 
     def set_open_command(self, func):

@@ -59,7 +59,7 @@ class InputPipelineModule(PipelineModule, RandomAccessPipelineModule):
 class ConceptWindow(QDialog):
     def __init__(
         self,
-        parent,
+        parent: QWidget,
         concept: ConceptConfig,
         ui_state: UIState,
         image_ui_state: UIState,
@@ -68,7 +68,6 @@ class ConceptWindow(QDialog):
         **kwargs
     ):
         super().__init__()
-
         self.concept = concept
         self.ui_state = ui_state
         self.image_ui_state = image_ui_state
@@ -155,14 +154,10 @@ class ConceptWindow(QDialog):
         prompt_path_entry = components.file_entry(container, 4, 2, self.text_ui_state, "prompt_path")
 
         def set_prompt_path_entry_enabled(option: str):
-            # We disable or enable the file_entry if 'concept' is chosen
-            # In Qt, you'd need to enable/disable the sub-widgets
-            if option == 'concept':
-                for child in prompt_path_entry.children.values():
-                    child.setEnabled(True)
-            else:
-                for child in prompt_path_entry.children.values():
-                    child.setEnabled(False)
+            # Enable the file entry's sub-widgets only if 'concept' is chosen.
+            for child in prompt_path_entry.children():
+                child.setEnabled(option == 'concept')
+
 
         components.options_kv(
             container, 4, 1,
