@@ -1,4 +1,3 @@
-# concept_tab.py
 
 import os
 import pathlib
@@ -28,6 +27,7 @@ from modules.util.ui.UIState import UIState
 class ConceptsTab(ConfigList):
 
     def __init__(self, parent: QWidget, train_config: TrainConfig, ui_state: UIState):
+        self.concept_widget = []
         super().__init__(
             master=parent,
             train_config=train_config,
@@ -44,14 +44,18 @@ class ConceptsTab(ConfigList):
         """
         Return a widget instance that represents one concept in the list.
         """
-        return ConceptWidget(parent_widget, element, i, open_command, remove_command, clone_command, save_command)
+        print("DEBUG: ConceptsTab.create_widget called")
+        self.concept_widget[i] = ConceptWidget(parent_widget, element, i, open_command, remove_command, clone_command, save_command)
+        print("   Created:", self.concept_widget[i])
+        return self.concept_widget[i]
 
     def create_new_element(self) -> dict:
         return ConceptConfig.default_values()
 
     def open_element_window(self, i, ui_state) -> QDialog:
+        print("DEBUG: ConceptsTab.open_element_window called")
         # ui_state is a tuple: (self.ui_state, self.image_ui_state, self.text_ui_state)
-        return ConceptWindow(self.master, self.current_config[i], ui_state[0], ui_state[1], ui_state[2])
+        return ConceptWindow(self.concept_widget[i], self.current_config[i], ui_state[0], ui_state[1], ui_state[2])
 
 import traceback
 
@@ -67,7 +71,8 @@ class ConceptWidget(QFrame):
     """
     def __init__(self, parent: QWidget, concept, i, open_command, remove_command, clone_command, save_command):
         super().__init__()
-        self.concept = concept
+        self.parent = parent
+        self.concept = concept # ConceptConfig
         self.ui_state = UIState(self, concept)
         self.image_ui_state = UIState(self, concept.image)
         self.text_ui_state = UIState(self, concept.text)
@@ -139,7 +144,6 @@ class ConceptWidget(QFrame):
         If the user clicks on the image area, call the open_command.
         We'll check if the click is within the image's rectangle.
         """
-        print("DEBUG: ConceptWidget mousePressEvent")
 
         # If within the 150x150 area, we interpret it as a click on the image
         pos = event.pos()
@@ -155,9 +159,7 @@ class ConceptWidget(QFrame):
 
 
     def set_open_command(self, func):
-        """
-        So we can store open_command if needed.
-        """
+        
         self.open_command = func
 
     def _randomize_seed(self, concept: ConceptConfig):
@@ -175,7 +177,6 @@ class ConceptWidget(QFrame):
     def configure_element(self):
         """
         Refresh the display name and preview image after an update.
-        Called by the parent if something changed in the concept.
         """
         self.name_label.setText(self._get_display_name())
         self._pixmap = self._get_preview_pixmap()

@@ -3,8 +3,10 @@ import platform
 import subprocess
 import traceback
 
-# pyside conversion note:
-# remember to come back and use QListWidget or something similar
+"""
+This is a window that gets used under the "Dataset Tools" tab, but 
+can also be used as a standalone program, via scripts/caption_ui.py
+"""
 
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QLabel, QPushButton, QCheckBox, QLineEdit,
@@ -34,9 +36,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 class CaptionUI(QMainWindow):
-    """
-    A PySide6 translation of your customtkinter-based CaptionUI.
-    """
+
     def __init__(
         self,
         parent=None,
@@ -45,24 +45,15 @@ class CaptionUI(QMainWindow):
     ):
         super().__init__(parent)
 
-        # -------------------------------------------------------------------
-        # Basic window configuration
-        # -------------------------------------------------------------------
         self.setWindowTitle("OneTrainer")
-        # If you want a fixed size (like resizable(False, False) in Tk):
-        # self.setFixedSize(1280, 980)
+
         self.show()
         self.raise_()
 
-        # -------------------------------------------------------------------
-        # Data / State
-        # -------------------------------------------------------------------
         self.dir = initial_dir
         self.config_ui_data = {
             "include_subdirectories": initial_include_subdirectories
         }
-        # You could still use a custom UIState if you wish, or just store directly:
-        # self.config_ui_state = UIState(self, self.config_ui_data)
 
         # Note: this size MUST be smaller than screen size or very bad things happen.
         self.image_size = 650
@@ -97,8 +88,7 @@ class CaptionUI(QMainWindow):
         self.mask_draw_radius = 0.01
         self.display_only_mask = False
         self.mask_editing_mode = 'draw'
-        self.enable_mask_editing = False  # Instead of BooleanVar
-
+        self.enable_mask_editing = False
         # For prompt editing
         self.prompt_text = ""
 
@@ -139,9 +129,7 @@ class CaptionUI(QMainWindow):
         # -------------------------------------------------------------------
         self.load_directory(self.config_ui_data["include_subdirectories"])
 
-    # -----------------------------------------------------------------------
-    # Top bar
-    # -----------------------------------------------------------------------
+
     def setup_top_bar(self):
         open_button = QPushButton("Open")
         open_button.setToolTip("Open a new directory")
@@ -634,9 +622,7 @@ class CaptionUI(QMainWindow):
             except Exception:
                 traceback.print_exc()
 
-    # -----------------------------------------------------------------------
-    # Directory / File open
-    # -----------------------------------------------------------------------
+
     def open_directory(self):
         new_dir = QFileDialog.getExistingDirectory(self, "Select Directory", self.dir or "")
         if new_dir:

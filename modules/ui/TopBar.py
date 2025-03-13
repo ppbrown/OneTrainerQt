@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QWidget, QGridLayout, QLabel, QPushButton, QComboBox
 )
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon
 
 from modules.util import path_util
 from modules.util.config.SecretsConfig import SecretsConfig

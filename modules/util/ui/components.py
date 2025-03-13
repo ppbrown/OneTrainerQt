@@ -40,12 +40,8 @@ def app_title(master: QWidget, row: int, column: int):
     if grid is not None and isinstance(grid, QGridLayout):
         grid.addWidget(frame, row, column)
 
-    # Load and process the icon image
-    try:
-        pil_img = Image.open("resources/icons/icon.png").resize((40, 40), Image.Resampling.LANCZOS)
-        pixmap = QPixmap.fromImage(pil_img.toqimage())
-    except Exception:
-        pixmap = QPixmap()
+    qicon = QIcon("resources/icons/icon.png")
+    
 
     label_icon = QLabel()
     label_icon.setPixmap(pixmap)

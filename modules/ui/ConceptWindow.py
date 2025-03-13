@@ -59,8 +59,8 @@ class InputPipelineModule(PipelineModule, RandomAccessPipelineModule):
 class ConceptWindow(QDialog):
     def __init__(
         self,
-        parent: QWidget,
-        concept: ConceptConfig,
+        parent,
+        concept,
         ui_state: UIState,
         image_ui_state: UIState,
         text_ui_state: UIState,
@@ -585,4 +585,5 @@ class ConceptWindow(QDialog):
         return QPixmap.fromImage(qimg)
 
     def __ok(self):
+        self.concept.configure_element()
         self.close()  # or self.accept() if you want to close the dialog

@@ -1,4 +1,3 @@
-# additional_embeddings_tab.py
 
 from pathlib import Path
 from PySide6.QtWidgets import (
@@ -7,7 +6,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
-from modules.ui.ConfigList import ConfigList     # PySide6 version of ConfigList
+from modules.ui.ConfigList import ConfigList
 from modules.util.config.TrainConfig import TrainConfig
 from modules.util.config.TrainConfig import TrainEmbeddingConfig
 from modules.util.ui.UIState import UIState
@@ -38,9 +37,6 @@ class AdditionalEmbeddingsTab(ConfigList):
         self._create_element_list()
 
     def create_widget(self, parent_widget, element, i, open_command, remove_command, clone_command, save_command):
-        """
-        Creates an EmbeddingWidget for each embedding.
-        """
         return EmbeddingWidget(parent_widget, element, i, open_command, remove_command, clone_command, save_command)
 
     def create_new_element(self) -> dict:
@@ -53,6 +49,7 @@ class AdditionalEmbeddingsTab(ConfigList):
         """
         Stub method: your code returns a ctk.CTkToplevel, but you have no
         actual code here, so we simply pass or create a stub.
+        XXX fixthis
         """
         pass
 

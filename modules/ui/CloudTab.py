@@ -1,4 +1,5 @@
-# cloud_tab.py
+
+# implements the GUI hooks for training in the cloud
 
 import webbrowser
 from PySide6.QtWidgets import (
@@ -14,7 +15,6 @@ from modules.util.enum.CloudType import CloudType
 from modules.util.ui.UIState import UIState
 
 class CloudTab(QScrollArea):
-
 
     def __init__(self, train_config: TrainConfig, ui_state: UIState, parent):
         super().__init__()
@@ -331,17 +331,9 @@ class CloudTab(QScrollArea):
         self.grid.addWidget(self.deterr_combo, 12, 5)
 
     # -------------------------------------------------------------------
-    # Additional methods
+    # Non-GUI util functions
     # -------------------------------------------------------------------
     def __set_gpu_types(self):
-        """
-        In your code, you do:
-            import runpod
-            runpod.api_key = ...
-            gpus = runpod.get_gpus()
-            ...
-        Then set the combo values.
-        """
         if self.train_config.cloud.type == "RUNPOD":  # or CloudType.RUNPOD
             try:
                 import runpod
@@ -355,9 +347,6 @@ class CloudTab(QScrollArea):
                 print(f"Error fetching GPU types: {e}")
 
     def __reattach(self):
-        """
-        Mark reattach = True, then call self.parent.start_training()
-        """
         self.reattach = True
         try:
             self.parent.start_training()
@@ -365,10 +354,6 @@ class CloudTab(QScrollArea):
             self.reattach = False
 
     def __create_cloud(self):
-        """
-        In your code, you open the runpod website:
-        https://www.runpod.io/console/deploy?template=1a33vbssq9&type=gpu
-        """
         if self.train_config.cloud.type == "RUNPOD":
             webbrowser.open("https://www.runpod.io/console/deploy?template=1a33vbssq9&type=gpu",
                             new=0, autoraise=False)
