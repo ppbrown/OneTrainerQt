@@ -6,13 +6,14 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
-from modules.ui.ConfigList import ConfigList
+#from modules.ui.ConfigList import ConfigList
+from modules.ui.OTConfigFrame import OTConfigFrame
 from modules.util.config.TrainConfig import TrainConfig
 from modules.util.config.TrainConfig import TrainEmbeddingConfig
 from modules.util.ui.UIState import UIState
 
 
-class AdditionalEmbeddingsTab(ConfigList):
+class AdditionalEmbeddingsTab(OTConfigFrame):
 
     def __init__(self, parent, train_config, ui_state):
 
@@ -46,11 +47,6 @@ class AdditionalEmbeddingsTab(ConfigList):
         return TrainEmbeddingConfig.default_values()
 
     def open_element_window(self, i, ui_state):
-        """
-        Stub method: your code returns a ctk.CTkToplevel, but you have no
-        actual code here, so we simply pass or create a stub.
-        XXX fixthis
-        """
         pass
 
 
