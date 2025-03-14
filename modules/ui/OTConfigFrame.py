@@ -349,7 +349,7 @@ class OTConfigFrame(QFrame):
         if 0 <= remove_i < len(self.current_config):
             self.current_config.pop(remove_i)
             # Rebuild the list from scratch to reindex
-            self._create_element_list()
+            self.__create_element_list()
             self.__save_current_config()
 
     # -----------------------------------------------------------------------
@@ -361,7 +361,7 @@ class OTConfigFrame(QFrame):
         """
         self.current_config.clear()
         if not filename or not os.path.isfile(filename):
-            self._create_element_list()
+            self.__create_element_list()
             return
 
         try:
@@ -377,7 +377,7 @@ class OTConfigFrame(QFrame):
             print(f"Error loading config from {filename}: {e}")
             self.current_config = []
 
-        self._create_element_list()
+        self.__create_element_list()
 
     def __save_current_config(self):
         if self.from_external_file:

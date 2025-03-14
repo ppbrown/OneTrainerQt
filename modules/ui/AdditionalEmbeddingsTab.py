@@ -14,7 +14,6 @@ from modules.util.ui.UIState import UIState
 
 
 class AdditionalEmbeddingsTab(OTConfigFrame):
-
     def __init__(self, parent, train_config, ui_state):
 
         super().__init__(
@@ -22,8 +21,8 @@ class AdditionalEmbeddingsTab(OTConfigFrame):
             train_config=train_config,
             ui_state=ui_state,
             attr_name="additional_embeddings",
-            from_external_file=False,
             add_button_text="add embedding",
+            from_external_file=False,
             is_full_width=True
         )
 
@@ -35,7 +34,7 @@ class AdditionalEmbeddingsTab(OTConfigFrame):
         """
         Overridden method that re-creates the widget list from the config.
         """
-        self._create_element_list()
+        self.__create_element_list()
 
     def create_widget(self, parent_widget, element, i, open_command, remove_command, clone_command, save_command):
         return EmbeddingWidget(parent_widget, element, i, open_command, remove_command, clone_command, save_command)
