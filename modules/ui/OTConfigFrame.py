@@ -6,9 +6,9 @@ import os
 import json
 import copy
 import contextlib
+
 # from abc import ABC, abstractmethod
 # QFrame does not play well with abstract base classes, so we throw exceptions instead
-
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QWidget, QFrame, QDialog,
@@ -24,29 +24,29 @@ from modules.util.ui.UIState import UIState
 
 class OTConfigFrame(QFrame):
     """
-    Abstract class that shares an implementation framework for a common construct in OneTrainer.
-    The top level is a frame that is intended to display 0 or more top level items. Examples of these are:
+    Parent class that shares an implementation framework for a common construct in OneTrainer.
+    
+    It sets up a top level ScrollArea with a GridLayout for displaying a list of items.
+    Examples of item types that use this are:
      - Concepts
      - Sampling configs
      - Embeddings
 
-    Each of these items may be able to be clicked on to bring up a detail configuration dialog targetted
+    Each of the items may be able to be clicked on to bring up a configuration dialog targetted
     to that specific item.
-
-    The items, and the configuration dialogs, have virtually nothing in common across these areas.
-    The only things that ARE in common, are:
-    - They all require an initial QFrame to set up their unique displays
-    - They all require saving/loading of their values
-
     
-    
+    It is up to the child class how the item is displayed, and what the configuration dialog looks like.
+
+    This class provides a common framework for saving and loading the items.
+    It also provides hooks for loading/saving the items from a file, or the central config file.
+
     """
 
     def __init__(
         self,
         master: QWidget,
-        train_config: TrainConfig,  # allows class to save config to the top level user config file
-        ui_state: UIState,          # tracks most recent state of the UI
+        train_config: TrainConfig,  # The object that tracks the top level user config file
+        ui_state: UIState,          # Tracks most recent state of the UI
         from_external_file: bool,
         attr_name: str = "",
         config_dir: str = "",
@@ -82,10 +82,9 @@ class OTConfigFrame(QFrame):
         # UI setup
         # -------------------------------------------------------
 
-        self.master_layout = QVBoxLayout(self)
-        self.master_layout.setContentsMargins(0, 0, 0, 0)
-        setLayout(self.master_layout)
-        self.master_layout.setSizeConstraint(QLayout.SetMinimumSize)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSizeConstraint(QLayout.SetMinimumSize)
 
 
         # A top "frame" (QFrame) for "add/select config" controls
@@ -93,7 +92,7 @@ class OTConfigFrame(QFrame):
         self.top_frame_layout = QHBoxLayout(self.top_frame)
         self.top_frame_layout.setContentsMargins(0, 0, 0, 0)
         self.top_frame_layout.setSpacing(5)
-        self.master_layout.addWidget(self.top_frame)
+        layout.addWidget(self.top_frame)
 
         # Area for added items, aka "elements".
         # This is a scrollable area that will contain the list of elements.
@@ -103,7 +102,7 @@ class OTConfigFrame(QFrame):
         self.scroll_layout = QVBoxLayout(self.scroll_content)
         self.scroll_layout.setSizeConstraint(QLayout.SetMinimumSize)
         self.scroll_area.setWidget(self.scroll_content)
-        self.master_layout.addWidget(self.scroll_area)
+        layout.addWidget(self.scroll_area)
 
         # This is where we store the actual config list elements
         if from_external_file:
@@ -129,6 +128,7 @@ class OTConfigFrame(QFrame):
             self.add_element_button = QPushButton(add_button_text)
             self.add_element_button.clicked.connect(self.__add_element)
             self.top_frame_layout.addWidget(self.add_element_button)
+            self.top_frame_layout.addStretch()
 
         else:
             # No external file. We directly have a list in train_config
@@ -139,9 +139,10 @@ class OTConfigFrame(QFrame):
             self.add_element_button = QPushButton(add_button_text)
             self.add_element_button.clicked.connect(self.__add_element)
             self.top_frame_layout.addWidget(self.add_element_button)
+            self.top_frame_layout.addStretch()
 
             # Display any elements that ARE created already
-            self._create_element_list()
+            self.__create_element_list()
 
 
     # -----------------------------------------------------------------------
@@ -215,7 +216,7 @@ class OTConfigFrame(QFrame):
     # -----------------------------------------------------------------------
     # (re)build the display of elements)
     # -----------------------------------------------------------------------
-    def _create_element_list(self):
+    def __create_element_list(self):
         """
         Clears and rebuilds the "element list" scroll area from self.current_config.
         """
