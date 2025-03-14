@@ -378,6 +378,9 @@ class TrainUI(QMainWindow):
 
 
     def create_sampling_tab(self) -> QWidget:
+
+        # FIXLATER: All this extra widget setup should probably be moved
+        # into SamplingTab
         container = QFrame()
         container_layout = QGridLayout(container)
         container_layout.setContentsMargins(5, 5, 5, 5)
@@ -437,6 +440,9 @@ class TrainUI(QMainWindow):
         components.switch(sub_frame, 0, 3, self.ui_state, "samples_to_tensorboard")
 
         # "frame" for table row=1 col=0
+        """
+        I think this is redundandt now??
+        
         bottom_frame = QFrame(container)
         bottom_frame_layout = QGridLayout(bottom_frame)
         bottom_frame_layout.setContentsMargins(0,0,0,0)
@@ -446,6 +452,9 @@ class TrainUI(QMainWindow):
 
         # Have to save the object to avoid garbage collection for the internal callback
         self.samplingtab = SamplingTab(bottom_frame, self.train_config, self.ui_state)
+        """
+        bottom_frame = SamplingTab(container, self.train_config, self.ui_state)
+        container_layout.addWidget(bottom_frame, 1, 0)
 
         return container
 

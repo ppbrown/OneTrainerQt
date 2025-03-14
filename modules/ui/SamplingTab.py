@@ -5,28 +5,27 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
-from modules.ui.ConfigList import ConfigList  # your PySide6-based class
+# from modules.ui.ConfigList import ConfigList  # your PySide6-based class
+from modules.ui.OTConfigFrame import OTConfigFrame
+
 from modules.ui.SampleParamsWindow import SampleParamsWindow
 from modules.util.config.SampleConfig import SampleConfig
 from modules.util.config.TrainConfig import TrainConfig
 from modules.util.ui.UIState import UIState
 
 
-# This inherits from ConfigList, which is a special abstract class that should be redesigned.
-# It breaks good object oriented design, by being forced to init things OUTSIDE of itself, via
-# its init method. This is a bad design pattern, and should be refactored.
-class SamplingTab(ConfigList):
+class SamplingTab(OTConfigFrame):
     def __init__(self, parent, train_config, ui_state):
         
         super().__init__(
             master=parent,
             train_config=train_config,
             ui_state=ui_state,
-            from_external_file=True,
             attr_name="sample_definition_file_name",
+            add_button_text="add sample",
+            from_external_file=True,
             config_dir="training_samples",
             default_config_name="samples.json",
-            add_button_text="add sample",
             is_full_width=True,
         )
         
