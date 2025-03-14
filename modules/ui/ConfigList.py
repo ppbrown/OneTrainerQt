@@ -93,6 +93,7 @@ class ConfigList(ABC):
         self.master_layout.addWidget(self.scroll_area)
 
         # This is where we store the actual config list elements
+        # self.configs[] appears to be only a list of filenames, more or less
         if from_external_file:
             # We hold a dropdown for selecting config files, plus an “add config” button, etc.
             self.configs_dropdown = None
@@ -133,6 +134,8 @@ class ConfigList(ABC):
     # -----------------------------------------------------------------------
     # Abstract methods that child classes must implement
     # -----------------------------------------------------------------------
+
+    # Called by _create_element_list(), __add_elenent(), __clone_element()
     @abstractmethod
     def create_widget(self, parent, element, i, open_command, remove_command, clone_command, save_command):
         """

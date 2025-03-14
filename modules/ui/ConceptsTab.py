@@ -44,10 +44,16 @@ class ConceptsTab(ConfigList):
         """
         Return a widget instance that represents one concept in the list.
         """
-        print("DEBUG: ConceptsTab.create_widget called")
-        self.concept_widget[i] = ConceptWidget(parent_widget, element, i, open_command, remove_command, clone_command, save_command)
-        print("   Created:", self.concept_widget[i])
-        return self.concept_widget[i]
+        print("DEBUG: ConceptsTab.create_widget called for index", i)
+        try:
+            w = ConceptWidget(parent_widget, element, i, open_command, remove_command, clone_command, save_command)
+            print("DEBUG: created ConceptWidget successfully")
+            self.concept_widget.append(w)
+            print("   Created widget for concept:",i)
+        except Exception as e:
+            print("DEBUG: Exception in ConceptsTab.create_widget:", e)
+            raise
+        return w
 
     def create_new_element(self) -> dict:
         return ConceptConfig.default_values()
@@ -55,7 +61,7 @@ class ConceptsTab(ConfigList):
     def open_element_window(self, i, ui_state) -> QDialog:
         print("DEBUG: ConceptsTab.open_element_window called")
         # ui_state is a tuple: (self.ui_state, self.image_ui_state, self.text_ui_state)
-        return ConceptWindow(self.concept_widget[i], self.current_config[i], ui_state[0], ui_state[1], ui_state[2])
+        return ConceptWindow(self, self.current_config[i], ui_state[0], ui_state[1], ui_state[2])
 
 import traceback
 
@@ -70,6 +76,11 @@ class ConceptWidget(QFrame):
     and calls commands passed from the parent.
     """
     def __init__(self, parent: QWidget, concept, i, open_command, remove_command, clone_command, save_command):
+        """
+        :param parent: The Widget that will contain this one.
+        :param concept: Refence to the item we display.
+        :param i: Index for the above concept in some hidden saved list. Find a better way to do this.
+        """
         super().__init__()
         self.parent = parent
         self.concept = concept # ConceptConfig
@@ -185,9 +196,9 @@ class ConceptWidget(QFrame):
     def _get_preview_pixmap(self) -> QPixmap:
         """
         Load the first image in the directory, or fallback to 'resources/icons/icon.png',
-        then convert to a 150x150 QPixmap.
+        Convert to a 150x150 QPixmap.
         """
-        preview_path = "resources/icons/icon.png"
+        
         glob_pattern = "**/*.*" if self.concept.include_subdirectories else "*.*"
 
         if os.path.isdir(self.concept.path):
@@ -197,35 +208,17 @@ class ConceptWidget(QFrame):
                         path_util.is_supported_image_extension(extension) and 
                         not path.name.endswith("-masklabel.png")):
                     preview_path = path_util.canonical_join(self.concept.path, path)
-                    break
+                    try:
+                        qp = QPixmap(preview_path).scaled(150, 150, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                        return qp
+                    except Exception as e:
+                        break
 
-        # open with PIL
-        pil_img = Image.open(preview_path)
-        size = min(pil_img.width, pil_img.height)
-        left = (pil_img.width - size) // 2
-        top = (pil_img.height - size) // 2
-        pil_img = pil_img.crop((left, top, left + size, top + size))
-        pil_img = pil_img.resize((150, 150), Image.Resampling.LANCZOS)
+        preview_path = "resources/icons/icon.png"
 
-        # convert to QPixmap
-        qimg = QImage(
-            pil_img.tobytes("raw", "RGB"),
-            pil_img.width,
-            pil_img.height,
-            3 * pil_img.width,
-            QImage.Format_RGB888
-        )
-        return QPixmap.fromImage(qimg)
+        return QPixmap(preview_path).scaled(150, 150, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
     def place_in_list(self):
-        """
-        The original code had: x = self.i % 6, y = self.i // 6
-        self.grid(row=y, column=x, ...)
-        In Qt, you'd typically have the parent do the layout in a grid.
-        For example, if the parent is QGridLayout, it might call:
-           parent_layout.addWidget(self, y, x)
-        We'll keep this method as a stub or call it from the parent.
-        """
         x = self.i % 6
         y = self.i // 6
         # If we rely on the parent's layout:
