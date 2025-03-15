@@ -317,7 +317,7 @@ class TrainUI(QMainWindow):
 
     # -----------------------------------------------------------------------
     # Tab creation functions start here
-    # Most tabs have their own class
+    # Tabs that have saveable config areas have their own class
     # -----------------------------------------------------------------------
     def create_general_tab(self) -> QWidget:
         return GeneralTab(self.ui_state)
@@ -355,16 +355,9 @@ class TrainUI(QMainWindow):
 
 
 
-    def create_concepts_tab(self) -> QWidget:
-        container = QFrame()
-        container_layout = QGridLayout(container)
-        container_layout.setContentsMargins(5, 5, 5, 5)
-        container_layout.setSpacing(5)
-        container.setLayout(container_layout)
+    def create_concepts_tab(self) -> ConceptsTab:
+        return ConceptsTab(self, self.train_config, self.ui_state)
 
-        # legacy ugliness that creates the real contents behind the scenes
-        self.conceptstab_configlist = ConceptsTab(container, self.train_config, self.ui_state)
-        return container
 
     def create_training_tab(self) -> TrainingTab:
         return TrainingTab(self.train_config, self.ui_state)

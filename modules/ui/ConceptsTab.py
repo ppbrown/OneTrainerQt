@@ -12,19 +12,15 @@ from PySide6.QtGui import QPixmap, QImage
 from PIL import Image
 
 from modules.ui.ConceptWindow import ConceptWindow  # presumably also converted to PySide
-from modules.ui.ConfigList import ConfigList  # your PySide version of "ConfigList"
+from modules.ui.OTConfigFrame import OTConfigFrame
 from modules.util import path_util
 from modules.util.config.ConceptConfig import ConceptConfig
 from modules.util.config.TrainConfig import TrainConfig
 from modules.util.ui.UIState import UIState
 
 
-# pyside6 conversion warning:
-# Current typing is a hackjob, because of the original code's design.
-# The init routine creates and manipulates things outside itself, violating OOP.
-# This class needs to be redesigned to be 
-# a proper QWidget with a layout and proper signal/slot connections.
-class ConceptsTab(ConfigList):
+
+class ConceptsTab(OTConfigFrame):
 
     def __init__(self, parent: QWidget, train_config: TrainConfig, ui_state: UIState):
         self.concept_widget = []
