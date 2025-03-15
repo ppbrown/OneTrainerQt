@@ -1,4 +1,6 @@
-# train_ui.py
+
+# Main window of program.
+# The GUI counterpart of scripts/train.py
 
 import sys
 import json
@@ -315,40 +317,32 @@ class TrainUI(QMainWindow):
 
     # -----------------------------------------------------------------------
     # Tab creation functions start here
-    # --1---------------------------------------------------------------------
+    # Most tabs have their own class
+    # -----------------------------------------------------------------------
     def create_general_tab(self) -> QWidget:
-
         return GeneralTab(self.ui_state)
 
-
     def create_model_tab(self, parent=None) -> QWidget:
-        # In the original code, this is ModelTab(...)
-        # We'll assume you've converted ModelTab to a QWidget-based class:
         return ModelTab(self, self.train_config, self.ui_state)
 
     def create_data_tab(self) -> QWidget:
-
-    
         scroll_area = QScrollArea()
         container = components.create_gridlayout(scroll_area)
 
         components.label(
-            container, 0, 0,
-            "Aspect Ratio Bucketing",
+            container, 0, 0, "Aspect Ratio Bucketing",
             tooltip="Aspect ratio bucketing enables training on images with different aspect ratios"
         )
         components.switch(container, 0, 1, self.ui_state, "aspect_ratio_bucketing")
 
         components.label(
-            container, 1, 0,
-            "Latent Caching",
+            container, 1, 0, "Latent Caching",
             tooltip="Caching of intermediate training data that can be re-used between epochs"
         )
         components.switch(container, 1, 1, self.ui_state, "latent_caching")
 
         components.label(
-            container, 2, 0,
-            "Clear cache before training",
+            container, 2, 0, "Clear cache before training",
             tooltip=(
                 "Clears the cache directory before starting to train. "
                 "Only disable this if you want to continue using the same cached data. "
@@ -466,14 +460,6 @@ class TrainUI(QMainWindow):
         return scroll_area
 
     def create_additional_embeddings_tab(self) -> QWidget:
-        """
-        container = QFrame()
-        container_layout = QGridLayout(container)
-        container_layout.setContentsMargins(5, 5, 5, 5)
-        container_layout.setSpacing(5)
-        container.setLayout(container_layout)
-        """
-
         return AdditionalEmbeddingsTab(self, self.train_config, self.ui_state)
 
 
@@ -485,13 +471,8 @@ class TrainUI(QMainWindow):
     def _tab_names(self):
         return [self.tabview.tabText(i) for i in range(self.tabview.count())]
 
+    # This seems like some kind of blank-tab placeholder...?
     def embedding_tab(self, widget: QWidget):
-        """
-        The old code used:
-          self.embedding_tab(self.tabview.add("embedding"))
-        We'll replicate a minimal approach. 
-        """
-        # e.g. fill the widget with controls for embedding
         layout = QVBoxLayout(widget)
         layout.addWidget(QLabel("Embedding tab content."))
         layout.addStretch(1)
