@@ -51,7 +51,6 @@ from modules.ui.TrainingTab import TrainingTab
 from modules.util.callbacks.TrainCallbacks import TrainCallbacks
 from modules.util.commands.TrainCommands import TrainCommands
 from modules.util.config.TrainConfig import TrainConfig
-from modules.util.enum.ImageFormat import ImageFormat
 from modules.util.enum.ModelType import ModelType
 from modules.util.enum.TrainingMethod import TrainingMethod
 from modules.util.torch_util import torch_gc
@@ -378,85 +377,8 @@ class TrainUI(QMainWindow):
 
 
     def create_sampling_tab(self) -> QWidget:
-
-        # FIXLATER: All this extra widget setup should probably be moved
-        # into SamplingTab
-        container = QFrame()
-        container_layout = QGridLayout(container)
-        container_layout.setContentsMargins(5, 5, 5, 5)
-        container_layout.setSpacing(5)
-        container.setLayout(container_layout)
-
-        # top_frame
-        top_frame = QFrame(container)
-        top_frame_layout = QGridLayout(top_frame)
-        top_frame_layout.setContentsMargins(0,0,0,0)
-        top_frame_layout.setSpacing(5)
-        top_frame.setLayout(top_frame_layout)
-        container_layout.addWidget(top_frame, 0, 0)
-
-        # sub_frame
-        sub_frame = QFrame(top_frame)
-        sub_frame_layout = QGridLayout(sub_frame)
-        sub_frame_layout.setContentsMargins(0,0,0,0)
-        sub_frame_layout.setSpacing(5)
-        sub_frame.setLayout(sub_frame_layout)
-        top_frame_layout.addWidget(sub_frame, 1, 0, 1, 6)  # row=1 col=0..5
-
-        # "Sample After" row=0 col=0..1
-        components.label(top_frame, 0, 0, "Sample After",
-                        tooltip="The interval used when automatically sampling from the model during training")
-        components.time_entry(top_frame, 0, 1, self.ui_state, "sample_after", "sample_after_unit")
-
-        # skip first
-        components.label(top_frame, 0, 2, "Skip First",
-                        tooltip="Start sampling automatically after this interval has elapsed.")
-        components.entry(top_frame, 0, 3, self.ui_state, "sample_skip_first", width=50, sticky="nw")
-
-        # format
-        components.label(top_frame, 0, 4, "Format",
-                        tooltip="File Format used when saving samples")
-        components.options_kv(
-            top_frame, 0, 5,
-            [
-                ("PNG", ImageFormat.PNG),
-                ("JPG", ImageFormat.JPG),
-            ],
-            self.ui_state, "sample_image_format"
-        )
-
-        # sample now
-        components.button(top_frame, 0, 6, "sample now", self.sample_now)
-        # manual sample
-        components.button(top_frame, 0, 7, "manual sample", self.open_sample_ui)
-
-        # sub_frame row=0 col=0..3
-        components.label(sub_frame, 0, 0, "Non-EMA Sampling",
-                        tooltip="Whether to include non-ema sampling when using ema.")
-        components.switch(sub_frame, 0, 1, self.ui_state, "non_ema_sampling")
-
-        components.label(sub_frame, 0, 2, "Samples to Tensorboard",
-                        tooltip="Whether to include sample images in the Tensorboard output.")
-        components.switch(sub_frame, 0, 3, self.ui_state, "samples_to_tensorboard")
-
-        # "frame" for table row=1 col=0
-        """
-        I think this is redundandt now??
-        
-        bottom_frame = QFrame(container)
-        bottom_frame_layout = QGridLayout(bottom_frame)
-        bottom_frame_layout.setContentsMargins(0,0,0,0)
-        bottom_frame_layout.setSpacing(5)
-        bottom_frame.setLayout(bottom_frame_layout)
-        container_layout.addWidget(bottom_frame, 1, 0)
-
-        # Have to save the object to avoid garbage collection for the internal callback
-        self.samplingtab = SamplingTab(bottom_frame, self.train_config, self.ui_state)
-        """
-        bottom_frame = SamplingTab(container, self.train_config, self.ui_state)
-        container_layout.addWidget(bottom_frame, 1, 0)
-
-        return container
+        tab = SamplingTab(self, self.train_config, self.ui_state, self.sample_now, self.open_sample_ui)
+        return tab
 
 
     def create_backup_tab(self) -> QWidget:

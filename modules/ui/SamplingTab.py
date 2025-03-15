@@ -11,11 +11,83 @@ from modules.ui.OTConfigFrame import OTConfigFrame
 from modules.ui.SampleParamsWindow import SampleParamsWindow
 from modules.util.config.SampleConfig import SampleConfig
 from modules.util.config.TrainConfig import TrainConfig
+from modules.util.enum.ImageFormat import ImageFormat
+
 from modules.util.ui.UIState import UIState
+from modules.util.ui import components
 
 
-class SamplingTab(OTConfigFrame):
-    def __init__(self, parent, train_config, ui_state):
+# We create a special control frame for global options, before we then add in the general case
+# list of sampler configs
+class SamplingTab(QFrame):
+    def __init__(self, parent, train_config: TrainConfig, ui_state: UIState, sample_now, open_sample_ui):   
+        super().__init__()     
+
+        container = self
+        container_layout = QGridLayout(self)
+        container_layout.setContentsMargins(5, 5, 5, 5)
+        container_layout.setSpacing(5)
+
+        # top_frame
+        top_frame = QFrame(container)
+        top_frame_layout = QGridLayout(top_frame)
+        top_frame_layout.setContentsMargins(0,0,0,0)
+        top_frame_layout.setSpacing(5)
+        top_frame.setLayout(top_frame_layout)
+        container_layout.addWidget(top_frame, 0, 0)
+
+        # sub_frame
+        sub_frame = QFrame(top_frame)
+        sub_frame_layout = QGridLayout(sub_frame)
+        sub_frame_layout.setContentsMargins(0,0,0,0)
+        sub_frame_layout.setSpacing(5)
+        sub_frame.setLayout(sub_frame_layout)
+        top_frame_layout.addWidget(sub_frame, 1, 0, 1, 6)  # row=1 col=0..5
+
+        # "Sample After" row=0 col=0..1
+        components.label(top_frame, 0, 0, "Sample After",
+                        tooltip="The interval used when automatically sampling from the model during training")
+        components.time_entry(top_frame, 0, 1, ui_state, "sample_after", "sample_after_unit")
+
+        # skip first
+        components.label(top_frame, 0, 2, "Skip First",
+                        tooltip="Start sampling automatically after this interval has elapsed.")
+        components.entry(top_frame, 0, 3, ui_state, "sample_skip_first", width=50, sticky="nw")
+
+        # format
+        components.label(top_frame, 0, 4, "Format",
+                        tooltip="File Format used when saving samples")
+        components.options_kv(
+            top_frame, 0, 5,
+            [
+                ("PNG", ImageFormat.PNG),
+                ("JPG", ImageFormat.JPG),
+            ],
+            ui_state, "sample_image_format"
+        )
+
+        # sample now
+        components.button(top_frame, 0, 6, "sample now", sample_now)
+        # manual sample
+        components.button(top_frame, 0, 7, "manual sample", open_sample_ui)
+
+        # sub_frame row=0 col=0..3
+        components.label(sub_frame, 0, 0, "Non-EMA Sampling",
+                        tooltip="Whether to include non-ema sampling when using ema.")
+        components.switch(sub_frame, 0, 1, ui_state, "non_ema_sampling")
+
+        components.label(sub_frame, 0, 2, "Samples to Tensorboard",
+                        tooltip="Whether to include sample images in the Tensorboard output.")
+        components.switch(sub_frame, 0, 3, ui_state, "samples_to_tensorboard")
+
+        bottom_frame = SamplingConfigFrame(container, train_config, ui_state)
+        container_layout.addWidget(bottom_frame, 1, 0)
+
+
+# This is the bottom part of the larger sampling frame. 
+# We save the entries here as config info, which is why we subclass OTConfigFrame
+class SamplingConfigFrame(OTConfigFrame):
+    def __init__(self, parent, train_config: TrainConfig, ui_state: UIState):
         
         super().__init__(
             master=parent,
@@ -28,7 +100,8 @@ class SamplingTab(OTConfigFrame):
             default_config_name="samples.json",
             is_full_width=True,
         )
-        
+ 
+
 
     def create_widget(self, parent_widget, element, i, open_command, remove_command, clone_command, save_command):
 
