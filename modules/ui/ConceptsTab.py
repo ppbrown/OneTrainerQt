@@ -40,10 +40,8 @@ class ConceptsTab(OTConfigFrame):
         """
         Return a widget instance that represents one concept in the list.
         """
-        print("DEBUG: ConceptsTab.create_widget called for index", i)
         try:
             w = ConceptWidget(parent_widget, element, i, open_command, remove_command, clone_command, save_command)
-            print("DEBUG: created ConceptWidget successfully")
             self.concept_widget.append(w)
             print("   Created widget for concept:",i)
         except Exception as e:
@@ -55,7 +53,6 @@ class ConceptsTab(OTConfigFrame):
         return ConceptConfig.default_values()
 
     def open_element_window(self, i, ui_state) -> QDialog:
-        print("DEBUG: ConceptsTab.open_element_window called")
         # ui_state is a tuple: (self.ui_state, self.image_ui_state, self.text_ui_state)
         return ConceptWindow(self, self.current_config[i], ui_state[0], ui_state[1], ui_state[2])
 
