@@ -108,6 +108,8 @@ def label(
         grid.addWidget(lbl, row, column, 1, 1)
         # For padding, we can do spacing around
         lbl.setContentsMargins(pad, pad, pad, pad)
+    else:
+        grid.addWidget(lbl)
 
     if tooltip:
         add_tooltip(lbl, tooltip)
@@ -140,6 +142,8 @@ def entry(
     grid = master.layout()
     if isinstance(grid, QGridLayout):
         grid.addWidget(line_edit, row, column, 1, 1)
+    else:
+        grid.addWidget(line_edit)
 
     if tooltip:
         add_tooltip(line_edit, tooltip)
@@ -325,6 +329,8 @@ def button(
     grid = master.layout()
     if isinstance(grid, QGridLayout):
         grid.addWidget(btn, row, column, 1, 1)
+    else:
+        grid.addWidget(btn)
     btn.clicked.connect(command)
 
     if tooltip:
