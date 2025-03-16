@@ -40,8 +40,8 @@ pytorch_optimizer==3.4.0 # pytorch optimizers
 scalene==1.5.51
 
 # ui
-pyside6
-pyqt6
+pyside6==6.8.2.1
+pyqt6==6.8.1
 
 # cloud
 runpod==1.7.7
