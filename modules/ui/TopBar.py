@@ -20,6 +20,7 @@ from modules.util.enum.ModelType import ModelType
 from modules.util.enum.TrainingMethod import TrainingMethod
 from modules.util.optimizer_util import change_optimizer
 from modules.util.ui.UIState import UIState
+from modules.util.ui.components import app_title
 
 
 class TopBar(QWidget):
@@ -63,7 +64,8 @@ class TopBar(QWidget):
         self.training_method_widget = None
 
         # 1) Title: previously components.app_title(...)
-        self.title_label = QLabel("OneTrainer")  
+        #self.title_label = QLabel("OneTrainer")  
+        self.title_label = app_title()
         # A big font or style might replicate an app title
         layout.addWidget(self.title_label, 0, 0)
 

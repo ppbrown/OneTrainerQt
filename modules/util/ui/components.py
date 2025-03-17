@@ -8,11 +8,11 @@ from typing import Any, Callable
 
 from PySide6.QtWidgets import (
     QLabel, QLineEdit, QPushButton, QCheckBox, QComboBox, QProgressBar,
-    QScrollArea, QVBoxLayout, QGridLayout, QLayout,
+    QScrollArea, QVBoxLayout, QHBoxLayout, QGridLayout, QLayout,
     QFileDialog, QFrame, QWidget
 )
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QIcon
 
 from PIL import Image
 
@@ -25,32 +25,22 @@ PAD = 10
 def add_tooltip(widget: QWidget, text: str = "widget info"):
         widget.setToolTip(text)
 
-def app_title(master: QWidget, row: int, column: int):
+def app_title() -> QWidget:
     """
-    Creates a small frame with an icon + "OneTrainer" label, placed at (row, column).
+    Creates a small frame with an icon + "OneTrainer" label.
     """
-    # Create the frame with a horizontal layout (simpler for one row of widgets)
-    frame = QFrame(master)
-    layout = QHBoxLayout(frame)
-    layout.setContentsMargins(0, 0, 0, 0)
-    layout.setSpacing(PAD)
+    # use Button, because for some reason, QLabel wont do icon+text cleanly.
+    button = QPushButton("OneTrainer")
+    button.setIcon(QIcon("resources/icons/icon.png"))
+    button.setIconSize(QSize(40, 40))
+    button.setFlat(True)
+    # Since the button doesnt do anything, make it not act like one.
+    button.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+    # At some point, we might make this button a replacement for the "Wiki" button,
+    # and reactivate it though...
 
-    # Add the frame to master's grid layout if it exists
-    grid = master.layout()
-    if grid is not None and isinstance(grid, QGridLayout):
-        grid.addWidget(frame, row, column)
+    return button
 
-    qicon = QIcon("resources/icons/icon.png")
-    
-
-    label_icon = QLabel()
-    label_icon.setPixmap(pixmap)
-    label_icon.setFixedSize(40, 40)
-    layout.addWidget(label_icon)
-
-    label_text = QLabel("OneTrainer")
-    label_text.setStyleSheet("font-size: 20px; font-weight: bold;")
-    layout.addWidget(label_text)
 
 def create_gridlayout(scroll_area: QScrollArea):
     """
