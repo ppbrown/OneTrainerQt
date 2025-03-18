@@ -19,8 +19,6 @@ from PySide6.QtWidgets import (
     QScrollArea, QPushButton, QComboBox, QLayout, QInputDialog
 )
 from PySide6.QtCore import Qt
-
-from modules.util import path_util
 from modules.util.config.BaseConfig import BaseConfig
 from modules.util.config.TrainConfig import TrainConfig
 from modules.util.ui.UIState import UIState
@@ -258,7 +256,7 @@ class OTConfigFrame(QFrame):
         # Build self.configs from .json files in self.config_dir
         if os.path.isdir(self.config_dir):
             for filename in os.listdir(self.config_dir):
-                fullpath = path_util.canonical_join(self.config_dir, path)
+                fullpath = os.path.join(self.config_dir, filename)
                 if filename.endswith(".json") and os.path.isfile(fullpath):
                     name, _ = os.path.splitext(filename)
                     self.configs.append((name, fullpath))
@@ -275,10 +273,10 @@ class OTConfigFrame(QFrame):
         """
         Create a new (display_name, path) entry in self.configs.
         """
-        safe_name = path_util.safe_filename(name)
-        path = path_util.canonical_join(self.config_dir, f"{name}.json")
+        safe_name = name.replace(" ", "_")  # or however you want to sanitize
+        path = os.path.join(self.config_dir, f"{safe_name}.json")
         self.configs.append((safe_name, path))
-        return path # XXX Check This
+        return path
 
     # -----------------------------------------------------------------------
     # Common routines for adding configs 
