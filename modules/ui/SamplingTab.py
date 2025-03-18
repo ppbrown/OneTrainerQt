@@ -1,4 +1,3 @@
-# sampling_tab.py
 
 from PySide6.QtWidgets import (
     QWidget, QFrame, QLabel, QPushButton, QLineEdit, QCheckBox, QGridLayout
@@ -113,7 +112,6 @@ class SamplingConfigFrame(OTConfigFrame):
 
     def open_element_window(self, i, ui_state):
 
-        # ui_state is presumably a single UIState or some structure
         return SampleParamsWindow(self, self.current_config[i], ui_state)
 
 
@@ -239,12 +237,8 @@ class SampleWidget(QFrame):
         self.enabled_switch.setChecked(bool(self.element.enabled))
         self.__set_enabled()
 
+    # unused?
     def place_in_list(self):
-        """
-        The original code used .grid(row=self.i, column=0, ...)
-        In Qt, typically the parent would do layout.addWidget(self, row, col).
-        We'll keep the method as a stub or call from the parent.
-        """
         if self.parentWidget() and hasattr(self.parentWidget(), 'layout'):
             parent_layout = self.parentWidget().layout()
             if isinstance(parent_layout, QGridLayout):

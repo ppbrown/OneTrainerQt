@@ -1,4 +1,6 @@
-# sample_window.py
+
+# This handles a MANUAL sample of a current model.
+# Automated sampling is handled by SampleTab and SampleFrame
 
 import copy
 import os
@@ -13,7 +15,7 @@ from PySide6.QtGui import QPixmap, QImage
 
 from modules.model.BaseModel import BaseModel
 from modules.modelSampler.BaseModelSampler import BaseModelSampler, ModelSamplerOutput
-from modules.ui.SampleFrame import SampleFrame  # Use your actual PySide6-based SampleFrame
+from modules.ui.SampleFrame import SampleFrame 
 from modules.util import create
 from modules.util.callbacks.TrainCallbacks import TrainCallbacks
 from modules.util.commands.TrainCommands import TrainCommands
@@ -27,12 +29,7 @@ from modules.util.ui.UIState import UIState
 
 
 class SampleWindow(QDialog):
-    """
-    A PySide6 conversion of your customtkinter-based SampleWindow.
 
-    This dialog can either delegate sampling to an external model/commands
-    (if train_config is None, with callbacks set), or load a local model and sampler itself.
-    """
 
     def __init__(
         self,

@@ -1,4 +1,3 @@
-# offloading_window.py
 
 from PySide6.QtWidgets import (
     QDialog, QGridLayout, QPushButton, QScrollArea, QFrame, QVBoxLayout
@@ -57,9 +56,7 @@ class OffloadingWindow(QDialog):
         self.main_layout.addWidget(self.ok_button, 1, 0, alignment=Qt.AlignRight)
 
     def __content_frame(self, parent_frame: QFrame):
-        """
-        Replicates the logic from your snippet: gradient checkpointing, async offloading, etc.
-        """
+
         # row=0 => gradient checkpointing
         components.label(parent_frame, 0, 0, "Gradient checkpointing",
                          tooltip="Enables gradient checkpointing. This reduces memory usage, but increases training time")

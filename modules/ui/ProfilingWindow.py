@@ -1,4 +1,3 @@
-# profiling_window.py
 
 import faulthandler
 
@@ -17,10 +16,9 @@ class ProfilingWindow(QDialog):
 
         self.setWindowTitle("Profiling")
         self.resize(512, 512)
-        # "resizable(True, True)" in Tk is the default in Qt unless you explicitly restrict it.
 
         # If you want the window to hide instead of truly close when the user clicks X:
-        # In Tk, you did "self.protocol('WM_DELETE_WINDOW', self.withdraw)"
+        # In Tk, we did "self.protocol('WM_DELETE_WINDOW', self.withdraw)"
         # We'll replicate that by overriding closeEvent below.
 
         # Top-level layout
@@ -55,8 +53,7 @@ class ProfilingWindow(QDialog):
 
     def closeEvent(self, event):
         """
-        Override the close event to mimic "self.withdraw()" from tkinter.
-        i.e. hide the window instead of actually closing.
+        Override the close event to hide the window instead of actually closing.
         """
         self.hide()
         event.ignore()

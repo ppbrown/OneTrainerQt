@@ -1,11 +1,7 @@
-# generate_masks_window.py
 
-""" Conversion warning:
-  This file has been converted from a customtkinter-based UI to a PySide6-based QDialog.
-  You should adjust references to self.parent as appropriate for your application’s architecture
-    (e.g., you might be calling load_masking_model on a main-window instance).
 
-"""
+# Sub window for the CaptionUI tools.
+# Allows for creation of image masks
 
 import os
 from PySide6.QtWidgets import (
@@ -17,7 +13,6 @@ from PySide6.QtCore import Qt
 class GenerateMasksWindow(QDialog):
     """
     Window for generating masks for a folder of images.
-    Replaces the customtkinter-based class with a QDialog using PySide6.
     """
 
     def __init__(self, parent, path, parent_include_subdirectories, *args, **kwargs):

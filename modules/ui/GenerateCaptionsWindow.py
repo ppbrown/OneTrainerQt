@@ -17,7 +17,6 @@ from PySide6.QtCore import Qt
 class GenerateCaptionsWindow(QMainWindow):
     """
     Window for generating captions for a folder of images.
-    Replaces the customtkinter-based class with a QDialog using PySide6.
     """
 
     def __init__(self, parent, path, parent_include_subdirectories, *args, **kwargs):

@@ -1,4 +1,5 @@
-# convert_model_ui.py
+
+# Util window under the "tools" tab
 
 import traceback
 import os

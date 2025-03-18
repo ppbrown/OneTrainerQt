@@ -16,3 +16,6 @@ If you need to pull them out again the following may be useful
         except Exception:
             traceback.print_exc()
             raise
+
+2. If you are wondering, "Is there a way to do X, with pyside?"
+Just ask ChatGPT. Its usually pretty good at knowing alternatives.

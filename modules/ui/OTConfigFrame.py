@@ -1,14 +1,18 @@
 
 
 # Varient of the original ConfigList class, but directly integrated into window system
-
+# Conceptually, this holds lists of at least two different types of object:
+# 1. a "Config" type object (e: BaseConfig)
+# 2. a related display "Widget" to display for each config object.
+#
 import os
 import json
 import copy
 import contextlib
 
-# from abc import ABC, abstractmethod
-# QFrame does not play well with abstract base classes, so we throw exceptions instead
+##from abc import ABC, abstractmethod
+# QFrame does not play well with abstract base classes, 
+# so we throw exceptions instead
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QWidget, QFrame, QDialog,
@@ -69,13 +73,15 @@ class OTConfigFrame(QFrame):
         super().__init__()
 
         # old way created a new QFrame, but we are already a QFrame.
-        
+        self.master = master
         self.train_config = train_config
         self.ui_state = ui_state
         self.from_external_file = from_external_file
         self.attr_name = attr_name
+
         self.config_dir = config_dir
         self.default_config_name = default_config_name
+
         self.is_full_width = is_full_width
 
         # -------------------------------------------------------
@@ -151,10 +157,10 @@ class OTConfigFrame(QFrame):
 
     def create_widget(self, parent, element, i, open_command, remove_command, clone_command, save_command):
         """
-        Return a QWidget for displaying a single element in the list.
+        Return a QWidget for displaying the specified single data element.
         :param parent: the parent widget (usually self.scroll_content).
-        :param element: the element data object the widget should wrap around
-        :param i: the index of the element in the list.
+        :param element: the element data object the widget should display
+        :param i: the index of the element in the current_config list.
         :param open_command: function to call when the element is opened.
         :param remove_command: function to call when the element is removed.
         :param clone_command: function to call when the element is cloned.
@@ -162,18 +168,21 @@ class OTConfigFrame(QFrame):
         """
         raise NotImplementedError("Subclasses must implement create_widget()")
 
-
+    # Called by our __add_element() or __load_config()
+    # We save the result in self.current_config
     def create_new_element(self):
         """
-        Return a new element object (e.g., a config BaseConfig).
+        Return a new config element object (e.g., a config BaseConfig).
         """
         raise NotImplementedError("Subclasses must implement create_new_element()")
 
-    def open_element_window(self, i, ui_state):
+    def open_element_window(self, i, ui_state) -> QWidget:
         """
-        Open a window/dialog for editing the i-th element. Return the dialog.
-        (This is expected to be called by __open_element_window(),
-         which will activate the dialog widget)
+        This is expected to be called by our __open_element_window().
+        Function must return a window/dialog for editing the i-th element. 
+        We will wait for dialog to finish, and then take care of saving 
+        the configs.
+        
         """
         raise NotImplementedError("Subclasses must implement open_element_window()")
 
@@ -202,6 +211,8 @@ class OTConfigFrame(QFrame):
 
         self.configs_dropdown.currentIndexChanged.connect(self.__on_config_selected)
         self.top_frame_layout.addWidget(self.configs_dropdown)
+
+        # XXX Check this
 
     def __on_config_selected(self, index):
         """
@@ -247,7 +258,7 @@ class OTConfigFrame(QFrame):
         # Build self.configs from .json files in self.config_dir
         if os.path.isdir(self.config_dir):
             for filename in os.listdir(self.config_dir):
-                fullpath = os.path.join(self.config_dir, filename)
+                fullpath = path_util.canonical_join(self.config_dir, path)
                 if filename.endswith(".json") and os.path.isfile(fullpath):
                     name, _ = os.path.splitext(filename)
                     self.configs.append((name, fullpath))
@@ -264,10 +275,10 @@ class OTConfigFrame(QFrame):
         """
         Create a new (display_name, path) entry in self.configs.
         """
-        safe_name = name.replace(" ", "_")  # or however you want to sanitize
-        path = os.path.join(self.config_dir, f"{safe_name}.json")
+        safe_name = path_util.safe_filename(name)
+        path = path_util.canonical_join(self.config_dir, f"{name}.json")
         self.configs.append((safe_name, path))
-        return path
+        return path # XXX Check This
 
     # -----------------------------------------------------------------------
     # Common routines for adding configs 
@@ -277,6 +288,7 @@ class OTConfigFrame(QFrame):
 
     # User clicked "add config" button, so spawn a dialog to ask for a name
     # and create a new config file.
+    # Then switch to that config
     def __add_config(self):
         text, ok = QInputDialog.getText(self, "Name", "Enter new config name:")
         if ok and text.strip():
@@ -305,7 +317,7 @@ class OTConfigFrame(QFrame):
 
         # A virtual call to the child class defined function of create_widget()
         # But isnt passing these functions back and forth a bit pointless?
-        # The child class should already know these functions?
+        # The child class should already know these functions? XXX
         w = self.create_widget(
             self.scroll_content,
             new_element,
@@ -324,7 +336,6 @@ class OTConfigFrame(QFrame):
 
     def __clone_element(self, clone_i, modify_element_fun=None):
         i = len(self.current_config)
-        # deep copy
         new_element = copy.deepcopy(self.current_config[clone_i])
 
         if modify_element_fun is not None:
@@ -410,7 +421,12 @@ class OTConfigFrame(QFrame):
             if isinstance(w, QDialog):
                 w.exec()
             else:
-                w.show()  # or w.exec_() if it's a QDialog
+                #w.show()  # or w.exec_() if it's a QDialog
+                raise NotImplementedError("Subclasses must implement open_element_window() to create a QDialog type")
+                #Otherwise, we wont 'wait' for dialog to close before coming back here.
         # Then reconfigure
-        # If we keep references to the widget in a list, we can call configure_element() if needed
+        # If we keep references to the widget in a list, 
+        # we can call configure_element() if needed
+
+        # XXX need to do: self.widgets[i].configure_element()
         self.__save_current_config()

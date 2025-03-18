@@ -1,4 +1,5 @@
-# optimizer_params_window.py
+
+# Subwindow for the Training Tab, optimizer section
 
 import contextlib
 

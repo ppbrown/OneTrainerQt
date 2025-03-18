@@ -1,4 +1,5 @@
-# concept_window.py
+
+# Window to edit properties of a single "concept" from the ConceptTab
 
 import os
 import pathlib
@@ -193,8 +194,7 @@ class ConceptWindow(QDialog):
 
     def __image_augmentation_tab(self, master: QWidget):
         """
-        The code places a ctk.CTkScrollableFrame, with a grid for the 'Random' and 'Fixed' columns,
-        plus an image preview. We'll replicate that with a QScrollArea and container layout.
+        Window with with a grid for the 'Random' and 'Fixed' columns, plus an image preview.
         """
         scroll_area = QScrollArea(master)
         scroll_area.setWidgetResizable(True)
@@ -413,7 +413,7 @@ class ConceptWindow(QDialog):
 
     def __get_preview_image(self):
         """
-        The logic from your code: pick an image from the concept.path, apply MGDS pipeline.
+        pick an image from the concept.path, apply MGDS pipeline.
         """
         preview_image_path = "resources/icons/icon.png"
         file_index = -1

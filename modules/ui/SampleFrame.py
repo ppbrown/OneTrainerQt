@@ -1,4 +1,7 @@
-# sample_frame.py
+
+# Might be better called "Sampling Frame"
+# Contains one definition to take a sample, during training.
+# (as handled under SamplingTab)
 
 import os
 from PySide6.QtWidgets import (
@@ -14,11 +17,6 @@ from modules.util.ui import components
 
 
 class SampleFrame(QFrame):
-    """
-    A PySide6 equivalent of your customtkinter-based SampleFrame.
-    Replaces the ctk.CTkFrame layout with QFrames and QGridLayouts,
-    and uses standard Qt widgets in place of `components.*` calls.
-    """
 
     def __init__(
         self,

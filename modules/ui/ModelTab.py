@@ -1,4 +1,3 @@
-# model_tab.py
 
 from pathlib import Path
 
@@ -17,12 +16,6 @@ from modules.util.ui.UIState import UIState
 
 
 class ModelTab(QWidget):
-    """
-    PySide6 conversion of your customtkinter-based ModelTab.
-
-    - Replaces CTkScrollableFrame with QScrollArea and a child QGridLayout.
-    - Replaces calls to `components.*` with standard Qt widgets.
-    """
 
     def __init__(self, parent: QWidget, train_config: TrainConfig, ui_state: UIState):
         super().__init__(parent)

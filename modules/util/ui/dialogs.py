@@ -1,6 +1,7 @@
 # string_input_dialog.py
 
 """
+XXX Check places that we use this...
 
 chatgpt says we could potentially replace this whole class:
 
@@ -33,9 +34,6 @@ from PySide6.QtCore import Qt
 
 
 class StringInputDialog(QDialog):
-    """
-    PySide6 conversion of your customtkinter-based StringInputDialog.
-    """
 
     def __init__(
         self,

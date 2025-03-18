@@ -1,4 +1,5 @@
-# lora_tab.py
+
+# Handle the Lora tab, when present
 
 from pathlib import Path
 
@@ -23,11 +24,6 @@ from modules.util.ui.UIState import UIState
 
 
 class LoraTab:
-    """
-    A PySide6-based translation of your customtkinter-based LoraTab.
-    We'll place the UI in a QFrame on 'master' if it's a layout-capable widget,
-    or we can adapt it to a direct layout approach.
-    """
 
     def __init__(self, master, train_config: TrainConfig, ui_state: UIState):
         super().__init__()

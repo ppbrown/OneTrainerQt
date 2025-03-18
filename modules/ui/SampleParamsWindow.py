@@ -1,4 +1,5 @@
-# sample_params_window.py
+
+# Allows a user to customize configuration info for a SampleFrame item
 
 from PySide6.QtWidgets import (
     QDialog, QGridLayout, QPushButton
