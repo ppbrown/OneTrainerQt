@@ -53,6 +53,7 @@ from modules.ui.TrainingTab import TrainingTab
 from modules.util.callbacks.TrainCallbacks import TrainCallbacks
 from modules.util.commands.TrainCommands import TrainCommands
 from modules.util.config.TrainConfig import TrainConfig
+from modules.util.enum.DataType import DataType
 from modules.util.enum.ModelType import ModelType
 from modules.util.enum.TrainingMethod import TrainingMethod
 from modules.util.torch_util import torch_gc
@@ -186,8 +187,7 @@ class TrainUI(QMainWindow):
 
         # add embedding tab if needed
         if training_method == TrainingMethod.EMBEDDING and "embedding" not in self._tab_names():
-            embedding_widget = QWidget()
-            self.embedding_tab(embedding_widget)
+            embedding_widget = self.create_embedding_tab()
             self.tabview.addTab(embedding_widget, "embedding")
 
     def load_preset(self):
@@ -457,18 +457,59 @@ class TrainUI(QMainWindow):
 
 
     def create_cloud_tab(self) -> QWidget:
-        # CloudTab(...) is presumably your own QWidget-based class
         return CloudTab(self.train_config, self.ui_state, self)
 
 
     def _tab_names(self):
         return [self.tabview.tabText(i) for i in range(self.tabview.count())]
 
-    # This seems like some kind of blank-tab placeholder...?
-    def embedding_tab(self, widget: QWidget):
-        layout = QVBoxLayout(widget)
-        layout.addWidget(QLabel("Embedding tab content."))
-        layout.addStretch(1)
+    def create_embedding_tab(self):
+        scroll_area = QScrollArea()
+        grid_container = components.create_gridlayout(scroll_area)
+        grid_layout = grid_container.layout()
+
+        grid_layout.setColumnStretch(0, 0)
+        grid_layout.setColumnStretch(1, 1)
+        grid_layout.setColumnStretch(2, 50)
+        grid_layout.setColumnStretch(3, 0)
+        grid_layout.setColumnStretch(4, 1)
+
+        components.label(grid_container, 0, 0, "Base embedding",
+                         tooltip="The base embedding to train on. Leave empty to create a new embedding")
+        
+        def json_path_modifier(x):
+            if x.endswith(".json"):
+                return Path(x).parent.absolute()
+            else:
+                return x
+        components.file_entry(
+            grid_container, 0, 1, self.ui_state, "embedding.model_name",
+            path_modifier=json_path_modifier
+        )
+
+        components.label(grid_container, 1, 0, "Token count",
+                         tooltip="The token count used when creating a new embedding. Leave empty to auto detect from the initial embedding text.")
+        components.entry(grid_container, 1, 1, self.ui_state, "embedding.token_count")
+
+        # initial embedding text
+        components.label(grid_container, 2, 0, "Initial embedding text",
+                         tooltip="The initial embedding text used when creating a new embedding")
+        components.entry(grid_container, 2, 1, self.ui_state, "embedding.initial_embedding_text")
+
+        # embedding weight dtype
+        components.label(grid_container, 3, 0, "Embedding Weight Data Type",
+                         tooltip="The Embedding weight data type used for training. This can reduce memory consumption, but reduces precision")
+        components.options_kv(grid_container, 3, 1, [
+            ("float32", DataType.FLOAT_32),
+            ("bfloat16", DataType.BFLOAT_16),
+        ], self.ui_state, "embedding_weight_dtype")
+
+        components.label(grid_container, 4, 0, "Placeholder",
+                         tooltip="The placeholder used when using the embedding in a prompt")
+        components.entry(grid_container, 4, 1, self.ui_state, "embedding.placeholder")
+
+        return scroll_area
+
 
 
     # -----------------------------------------------------------------------

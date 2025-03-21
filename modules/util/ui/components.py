@@ -4,12 +4,13 @@
 """
 
 import os
+import traceback
 from typing import Any, Callable
 
 from PySide6.QtWidgets import (
     QLabel, QLineEdit, QPushButton, QCheckBox, QComboBox, QProgressBar,
     QScrollArea, QVBoxLayout, QHBoxLayout, QGridLayout, QLayout,
-    QFileDialog, QFrame, QWidget
+    QFileDialog, QFrame, QDialog, QWidget
 )
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QPixmap, QIcon
@@ -91,6 +92,13 @@ def label(
     wide_tooltip: bool = False,
     wraplength: int = 0
 ):
+    
+    # Since label() is typically the first func in here to be called,
+    # it shouldnt really be neccessary to add this type of check to the others
+    if isinstance(master, QLayout):
+        traceback.print_stack()
+        raise TypeError("master must be a container type, not a layout type")
+    
     lbl = QLabel(text, master)
     # No direct "wraplength" in Qt, we can do word wrap
     if wraplength > 0:
