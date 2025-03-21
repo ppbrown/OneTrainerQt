@@ -45,6 +45,9 @@ class AdditionalEmbeddingsTab(OTConfigFrame):
         """
         return TrainEmbeddingConfig.default_values()
 
+    
+    # Typically for when an "Element" needs a detailed dialog for config.
+    # We dont need that
     def open_element_window(self, i, ui_state):
         pass
 
