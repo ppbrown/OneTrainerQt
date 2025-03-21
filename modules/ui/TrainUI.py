@@ -77,11 +77,6 @@ class TrainUI(QMainWindow):
         # -------------------------------------------------------------------
         self.setWindowTitle("OneTrainer")
         self.resize(1100, 740)
-        # If you want a fixed size:
-        # self.setFixedSize(1100, 740)
-
-        # In Qt, there's no built-in "appearance mode" setting like in customtkinter.
-        # If you want styling, you'd typically apply style sheets or QPalette.
 
         # -------------------------------------------------------------------
         # Data / State
@@ -132,6 +127,7 @@ class TrainUI(QMainWindow):
         main_layout.addWidget(bottom_bar_frame)
 
         self.setAttribute(Qt.WA_DeleteOnClose, True)
+        
 
     # -----------------------------------------------------------------------
     # Window Closing
@@ -141,8 +137,11 @@ class TrainUI(QMainWindow):
         event.accept()
 
     def __close(self):
+        # This auto-saves the current settings to the special file,
+        #  '#.json'
         self.top_bar_component.save_default()
-        # If you'd like to exit the Qt application entirely:
+
+        # If you'd like to force exit the Qt application entirely:
         # self.close()  # not strictly needed if event.accept() was used
 
     # -----------------------------------------------------------------------
