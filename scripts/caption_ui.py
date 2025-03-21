@@ -19,7 +19,7 @@ def main():
     app = QApplication(sys.argv)
 
     window = CaptionUI()
-    window.show()
+    window.showNormal()
 
     sys.exit(app.exec())
 

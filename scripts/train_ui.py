@@ -11,7 +11,7 @@ def main():
     app = QApplication(sys.argv)
     
     window = TrainUI()
-    window.show()
+    window.showNormal()
 
     sys.exit(app.exec())
     
