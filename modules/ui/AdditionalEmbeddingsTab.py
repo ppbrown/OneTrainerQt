@@ -1,4 +1,9 @@
 
+
+# This is the "Additional Embeddings" window.
+# The tab used in directly training embeddings themselves,
+# is currently created in TrainUI.py
+
 from pathlib import Path
 from PySide6.QtWidgets import (
     QWidget, QFrame, QLabel, QPushButton, QLineEdit, QCheckBox,
