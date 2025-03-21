@@ -268,16 +268,21 @@ def time_entry(
     supports_time_units: bool = True
 ):
     container = QFrame(master)
-    container_layout = QGridLayout(container)
-    container_layout.setContentsMargins(0,0,0,0)
+    #container.setStyleSheet("background-color: darkred;")
+
+    container_layout = QHBoxLayout(container)
+    container_layout.setContentsMargins(0, 0, 0, 0)
     container_layout.setSpacing(PAD)
+    container_layout.setAlignment(Qt.AlignLeft)
     container.setLayout(container_layout)
 
-    grid = master.layout()
-    if isinstance(grid, QGridLayout):
-        grid.addWidget(container, row, column, 1, 1)
+    mlayout = master.layout()
+    if isinstance(mlayout, QGridLayout):
+        mlayout.addWidget(container, row, column, 1, 1)
+    else:
+        mlayout.addWidget(container)
 
-    line_edit = entry(container, 0, 0, ui_state, var_name, width=50)
+    entry(container, 0, 0, ui_state, var_name, width=50)
 
     all_values = [str(x) for x in list(TimeUnit)]
     if not supports_time_units:
@@ -289,7 +294,7 @@ def time_entry(
     combo.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
     combo.setMinimumSize(combo.sizeHint())
 
-    container_layout.addWidget(combo, 0, 1)
+    container_layout.addWidget(combo)
 
     # bind the combo to var
     var_unit = ui_state.get_var(unit_var_name)
