@@ -7,10 +7,11 @@ import os
 import traceback
 from typing import Any, Callable
 
+
 from PySide6.QtWidgets import (
     QLabel, QLineEdit, QPushButton, QCheckBox, QComboBox, QProgressBar,
     QScrollArea, QVBoxLayout, QHBoxLayout, QGridLayout, QLayout,
-    QFileDialog, QFrame, QDialog, QWidget
+    QFileDialog, QFrame, QDialog, QWidget, QSizePolicy
 )
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QPixmap, QIcon
@@ -284,6 +285,10 @@ def time_entry(
 
     combo = QComboBox(container)
     combo.addItems(all_values)
+
+    combo.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+    combo.setMinimumSize(combo.sizeHint())
+
     container_layout.addWidget(combo, 0, 1)
 
     # bind the combo to var
