@@ -14,11 +14,21 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
+from modules.module.WDModel import WDModel
+from modules.module.BlipModel import BlipModel
+from modules.module.Blip2Model import Blip2Model
+from modules.module.BaseImageCaptionModel import BaseImageCaptionModel
+
+
+from modules.util.torch_util import default_device
+import torch
+
 class GenerateCaptionsWindow(QMainWindow):
     """
     Window for generating captions for a folder of images.
     """
 
+        
     def __init__(self, parent, path, parent_include_subdirectories, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
 
@@ -33,7 +43,10 @@ class GenerateCaptionsWindow(QMainWindow):
         # ---------------------------------------------------------------------
         # Variables / state
         # ---------------------------------------------------------------------
-        self.models = ["Blip", "Blip2", "WD14 VIT v2"]
+        self.caption_model_list = BaseImageCaptionModel.get_all_model_choices()
+        self.caption_modelname_list = list(self.caption_model_list.keys())
+        self.caption_modelname = self.caption_modelname_list[0]
+
         self.modes = ["Replace all captions", "Create if absent", "Add as new line"]
 
         central_widget = QWidget(self)
@@ -50,8 +63,8 @@ class GenerateCaptionsWindow(QMainWindow):
         # Model label and combo
         model_label = QLabel("Model:")
         self.model_combo = QComboBox()
-        self.model_combo.addItems(self.models)
-        self.model_combo.setCurrentIndex(self.models.index("Blip"))  # default to "Blip"
+        self.model_combo.addItems(self.caption_modelname_list)
+        # self.model_combo.setCurrentIndex(self.models.index("Blip")) 
         grid.addWidget(model_label, 0, 0)
         grid.addWidget(self.model_combo, 0, 1)
 
@@ -141,15 +154,16 @@ class GenerateCaptionsWindow(QMainWindow):
 
     def create_captions(self):
         """
-        Called when "Create Captions" is clicked.  
-        Loads the model, calls the parent's captioning_model, etc.
+        Called when "Create Captions" button is clicked. 
         """
-        if not self.parent:
-            return  # or raise an exception
+        modelname = self.model_combo.currentText()
 
-        # Ask parent to load the chosen model
-        model_name = self.model_combo.currentText()
-        self.parent.load_captioning_model(model_name)
+        if not modelname == self.caption_modelname:
+            self.caption_model = self.caption_model_list[modelname](default_device, torch.float16, modelname)
+        if self.caption_model:
+            self.captionmodelname = modelname
+        else:
+            self.current_captionmodel = None    
 
         # Convert selected mode to your internal strings
         mode_map = {
@@ -159,8 +173,7 @@ class GenerateCaptionsWindow(QMainWindow):
         }
         selected_mode = mode_map.get(self.mode_combo.currentText(), "fill")
 
-        # Call parent's model to caption folder
-        self.parent.captioning_model.caption_folder(
+        self.caption_model.caption_folder(
             sample_dir=self.path_edit.text(),
             initial_caption=self.caption_entry.text(),
             caption_prefix=self.prefix_entry.text(),
@@ -171,7 +184,7 @@ class GenerateCaptionsWindow(QMainWindow):
         )
 
         # Reload the parent’s image display or do any final updates
-        self.parent.load_image()
+        self.parent.load_image
 
         # Optionally close the dialog automatically
         # self.accept()  # or self.close()

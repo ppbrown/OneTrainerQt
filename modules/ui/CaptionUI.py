@@ -16,13 +16,10 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QPoint, QRect, QSize
 from PySide6.QtGui import QPixmap, QImage, QMouseEvent, QAction, QKeyEvent
 
-from modules.module.Blip2Model import Blip2Model
-from modules.module.BlipModel import BlipModel
 from modules.module.ClipSegModel import ClipSegModel
 from modules.module.MaskByColor import MaskByColor
 from modules.module.RembgHumanModel import RembgHumanModel
 from modules.module.RembgModel import RembgModel
-from modules.module.WDModel import WDModel
 
 from modules.ui.GenerateCaptionsWindow import GenerateCaptionsWindow
 from modules.ui.GenerateMasksWindow import GenerateMasksWindow
@@ -72,7 +69,7 @@ class CaptionUI(QMainWindow):
         )
 
         self.masking_model = None
-        self.captioning_model = None
+
 
         # List of relative image paths in self.dir
         self.image_rel_paths = []
@@ -676,21 +673,8 @@ class CaptionUI(QMainWindow):
             if not isinstance(self.masking_model, MaskByColor):
                 self.masking_model = MaskByColor(default_device, torch.float32)
 
-    def load_captioning_model(self, model):
-        self.masking_model = None
 
-        if model == "Blip":
-            if not isinstance(self.captioning_model, BlipModel):
-                print("loading Blip model, this may take a while")
-                self.captioning_model = BlipModel(default_device, torch.float16)
-        elif model == "Blip2":
-            if not isinstance(self.captioning_model, Blip2Model):
-                print("loading Blip2 model, this may take a while")
-                self.captioning_model = Blip2Model(default_device, torch.float16)
-        elif model == "WD14 VIT v2":
-            if not isinstance(self.captioning_model, WDModel):
-                print("loading WD14_VIT_v2 model, this may take a while")
-                self.captioning_model = WDModel(default_device, torch.float16)
+
 
     # -----------------------------------------------------------------------
     # Help
