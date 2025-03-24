@@ -2,6 +2,9 @@ from util.import_util import script_imports
 
 script_imports()
 
+from modules.module.WDModel import WDModel
+from modules.module.BlipModel import BlipModel
+from modules.module.Blip2Model import Blip2Model
 from modules.module.BaseImageCaptionModel import BaseImageCaptionModel
 from modules.util.args.GenerateCaptionsArgs import GenerateCaptionsArgs
 
