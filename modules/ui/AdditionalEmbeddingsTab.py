@@ -99,23 +99,21 @@ class EmbeddingWidget(QFrame):
         self.bottom_frame_layout.setSpacing(5)
         self.layout_grid.addWidget(self.bottom_frame, 1, 0)
 
-        # Top row
-        # Close button (X)
-        self.close_button = QPushButton("X", self.top_frame)
-        self.close_button.setStyleSheet("background-color: #C00000; color: white; border-radius:2px;")
-        self.close_button.setFixedSize(20, 20)
-        self.close_button.clicked.connect(lambda: remove_command(self.i))
-        self.top_frame_layout.addWidget(self.close_button, 0, 0)
-
-        # Clone button (+)
-        self.clone_button = QPushButton("+", self.top_frame)
-        self.clone_button.setStyleSheet("background-color: #00C000; color: white; border-radius:2px;")
-        self.clone_button.setFixedSize(20, 20)
-        self.clone_button.clicked.connect(lambda: clone_command(self.i, self.__randomize_uuid))
-        self.top_frame_layout.addWidget(self.clone_button, 0, 1)
-
         top_frame = self.top_frame
         bottom_frame = self.bottom_frame
+        
+        # Top row
+        # Close button (X)
+        close_button = components.button(top_frame, 0, 0, "X", lambda: remove_command(self.i), "clone")
+        close_button.setStyleSheet("background-color: #C00000; color: white; border-radius:2px;")
+        close_button.setFixedSize(20, 20)
+
+        # Clone button (+)
+        clone_button = components.button(top_frame, 0, 1, "+", lambda: clone_command(self.i, self.__randomize_uuid), "clone")
+        clone_button.setStyleSheet("background-color: #00C000; color: white; border-radius:2px;")
+        clone_button.setFixedSize(20, 20)
+                
+        
 
         # embedding model names
         components.label(top_frame, 0, 2, "base embedding:",
