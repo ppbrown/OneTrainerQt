@@ -7,7 +7,7 @@ from typing import Any, Optional
 from pathlib import Path
 
 from PySide6.QtCore import QObject, QEvent
-from PySide6.QtGui import QWheelEvent
+from PySide6.QtGui import QWheelEvent, QIcon
 from PySide6.QtWidgets import QWidget
 
 """
