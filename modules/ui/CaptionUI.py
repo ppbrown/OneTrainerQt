@@ -10,10 +10,10 @@ can also be used as a standalone program, via scripts/caption_ui.py
 
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QLabel, QPushButton, QCheckBox, QLineEdit,
-    QVBoxLayout, QHBoxLayout, QGridLayout, QScrollArea, QFileDialog,
-    QMessageBox, QSizePolicy
+    QVBoxLayout, QHBoxLayout, QGridLayout, QFileDialog,
+    QMessageBox, QListWidget, QListWidgetItem
 )
-from PySide6.QtCore import Qt, QPoint, QRect, QSize
+from PySide6.QtCore import Qt, QPoint
 from PySide6.QtGui import QPixmap, QImage, QMouseEvent, QAction, QKeyEvent
 
 from modules.module.ClipSegModel import ClipSegModel
@@ -108,12 +108,10 @@ class CaptionUI(QMainWindow):
         main_layout.addLayout(self.bottom_layout, stretch=1)
 
         # Left column: scrollable list of images
-        self.file_list_scroll_area = QScrollArea()
-        self.file_list_scroll_area.setWidgetResizable(True)
-        self.file_list_container = QWidget()
-        self.file_list_layout = QVBoxLayout(self.file_list_container)
-        self.file_list_scroll_area.setWidget(self.file_list_container)
-        self.bottom_layout.addWidget(self.file_list_scroll_area, 0)
+        self.file_list_widget = QListWidget()
+        self.file_list_widget.setMinimumWidth(150)
+        self.file_list_widget.itemClicked.connect(self.handle_file_clicked)
+        self.bottom_layout.addWidget(self.file_list_widget, 0)
 
         # Center content (image, mask, caption)
         self.content_widget = QWidget()
@@ -175,26 +173,16 @@ class CaptionUI(QMainWindow):
     # File list (left column)
     # -----------------------------------------------------------------------
     def rebuild_file_list_ui(self):
-        """
-        Clears out the old file-list layout, rebuilds labels for each image.
-        """
-        # Clear old items
-        while self.file_list_layout.count() > 0:
-            child = self.file_list_layout.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
-
-        # Rebuild
+        self.file_list_widget.clear()
         for i, rel_path in enumerate(self.image_rel_paths):
-            label = ClickableLabel(rel_path)
-            label.clicked_index.connect(self.switch_image)
-            label.set_index(i)
-            label.setText(rel_path)
-            # Use a little indentation
-            label.setContentsMargins(5, 2, 5, 2)
-            self.file_list_layout.addWidget(label)
+            item = QListWidgetItem(rel_path)
+            item.setData(Qt.UserRole, i)
+            self.file_list_widget.addItem(item)
 
-        self.file_list_layout.addStretch(1)
+    def handle_file_clicked(self, item):
+        index = item.data(Qt.UserRole)
+
+        self.switch_image(index)
 
     # -----------------------------------------------------------------------
     # Content column (center areas)
@@ -294,6 +282,8 @@ class CaptionUI(QMainWindow):
     # -----------------------------------------------------------------------
     # Image, Mask, Prompt loading
     # -----------------------------------------------------------------------
+
+    # Returns Image object for self.current_image_index
     def load_image(self):
         if (
             len(self.image_rel_paths) > 0 and
@@ -324,6 +314,7 @@ class CaptionUI(QMainWindow):
                     return None
         return None
 
+    # probably should be called "load_caption"
     def load_prompt(self):
         if (
             len(self.image_rel_paths) > 0 and
@@ -344,22 +335,14 @@ class CaptionUI(QMainWindow):
     # Image switching
     # -----------------------------------------------------------------------
     def switch_image(self, index: int):
-        # Deselect old label color
-        old_label = self.find_label_by_index(self.current_image_index)
-        if old_label:
-            old_label.setStyleSheet("color: black;")
-
-        self.current_image_index = index
-        label = self.find_label_by_index(index)
-        if label:
-            # highlight in red
-            label.setStyleSheet("color: red;")
-
         if index < 0 or index >= len(self.image_rel_paths):
             # no images
             blank_img = Image.new("RGB", (512, 512), (0, 0, 0))
             self.set_image_on_label(blank_img)
             return
+
+        self.current_image_index = index
+        self.file_list_widget.setCurrentRow(index)
 
         self.pil_image = self.load_image()
         self.pil_mask = self.load_mask()
@@ -378,19 +361,6 @@ class CaptionUI(QMainWindow):
         else:
             blank_img = Image.new("RGB", (512, 512), (0, 0, 0))
             self.set_image_on_label(blank_img)
-
-    def find_label_by_index(self, index: int):
-        """
-        Returns the label in the file-list layout with that index, if any.
-        (We stored the index in ClickableLabel.)
-        """
-        for i in range(self.file_list_layout.count()):
-            item = self.file_list_layout.itemAt(i)
-            if item and item.widget():
-                w = item.widget()
-                if isinstance(w, ClickableLabel) and w.index == index:
-                    return w
-        return None
 
     def refresh_image(self):
         """ Combine self.pil_image + self.pil_mask if necessary and show on the image_label. """
@@ -682,6 +652,8 @@ class CaptionUI(QMainWindow):
     def print_help(self):
         QMessageBox.information(self, "Help", self.help_text)
 
+
+
 # -----------------------------------------------------------------------------
 # Helper: a custom clickable label that can emit signals for press/move/wheel
 # -----------------------------------------------------------------------------
@@ -728,5 +700,4 @@ class ClickableLabel(QLabel):
         direction = 1 if delta_y > 0 else -1
         self.wheel_scrolled.emit(direction)
         event.accept()
-
 
