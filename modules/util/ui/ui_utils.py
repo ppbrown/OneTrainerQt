@@ -4,6 +4,7 @@
 import sys
 from collections.abc import Callable
 from typing import Any, Optional
+from pathlib import Path
 
 from PySide6.QtCore import QObject, QEvent
 from PySide6.QtGui import QWheelEvent
