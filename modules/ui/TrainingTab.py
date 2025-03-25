@@ -7,8 +7,6 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 
 from modules.util.config.TrainConfig import TrainConfig
-from modules.util.enum.AlignPropLoss import AlignPropLoss
-from modules.util.enum.AttentionMechanism import AttentionMechanism
 from modules.util.enum.DataType import DataType
 from modules.util.enum.EMAMode import EMAMode
 from modules.util.enum.GradientCheckpointingMethod import GradientCheckpointingMethod
@@ -114,7 +112,6 @@ class TrainingTab(QWidget):
         self.__create_unet_frame(col1_layout)
         self.__create_noise_frame(col1_layout)
 
-        self.__create_align_prop_frame(col2_layout)
         self.__create_masked_frame(col2_layout)
         self.__create_loss_frame(col2_layout)
 
@@ -129,7 +126,6 @@ class TrainingTab(QWidget):
         self.__create_transformer_frame(col1_layout)
         self.__create_noise_frame(col1_layout)
 
-        self.__create_align_prop_frame(col2_layout)
         self.__create_masked_frame(col2_layout)
         self.__create_loss_frame(col2_layout)
 
@@ -143,7 +139,6 @@ class TrainingTab(QWidget):
         self.__create_unet_frame(col1_layout)
         self.__create_noise_frame(col1_layout)
 
-        self.__create_align_prop_frame(col2_layout)
         self.__create_masked_frame(col2_layout)
         self.__create_loss_frame(col2_layout)
 
@@ -168,7 +163,6 @@ class TrainingTab(QWidget):
         self.__create_prior_frame(col1_layout)
         self.__create_noise_frame(col1_layout)
 
-        self.__create_align_prop_frame(col2_layout)
         self.__create_masked_frame(col2_layout)
         self.__create_loss_frame(col2_layout, supports_vb_loss=True)
 
@@ -182,7 +176,6 @@ class TrainingTab(QWidget):
         self.__create_transformer_frame(col1_layout, supports_guidance_scale=True)
         self.__create_noise_frame(col1_layout)
 
-        self.__create_align_prop_frame(col2_layout)
         self.__create_masked_frame(col2_layout)
         self.__create_loss_frame(col2_layout)
 
@@ -766,46 +759,6 @@ class TrainingTab(QWidget):
 
         layout.addWidget(frame)
 
-    def __create_align_prop_frame(self, layout):
-        frame = QFrame()
-        frame.setFrameShape(QFrame.StyledPanel)
-        fl = QGridLayout(frame)
-        # align prop
-        components.label(frame, 0, 0, "AlignProp",
-                         tooltip="Enables AlignProp training")
-        components.switch(frame, 0, 1, self.ui_state, "align_prop")
-
-        # align prop probability
-        components.label(frame, 1, 0, "AlignProp Probability",
-                         tooltip="When AlignProp is enabled, specifies the number of training steps done using AlignProp calculations")
-        components.entry(frame, 1, 1, self.ui_state, "align_prop_probability")
-
-        # align prop loss
-        components.label(frame, 2, 0, "AlignProp Loss",
-                         tooltip="Specifies the loss function used for AlignProp calculations")
-        components.options(frame, 2, 1, [str(x) for x in list(AlignPropLoss)], self.ui_state, "align_prop_loss")
-
-        # align prop weight
-        components.label(frame, 3, 0, "AlignProp Weight",
-                         tooltip="A weight multiplier for the AlignProp loss")
-        components.entry(frame, 3, 1, self.ui_state, "align_prop_weight")
-
-        # align prop steps
-        components.label(frame, 4, 0, "AlignProp Steps",
-                         tooltip="Number of inference steps for each AlignProp step")
-        components.entry(frame, 4, 1, self.ui_state, "align_prop_steps")
-
-        # align prop truncate steps
-        components.label(frame, 5, 0, "AlignProp Truncate Steps",
-                         tooltip="Fraction of steps to randomly truncate when using AlignProp. This is needed to increase model diversity.")
-        components.entry(frame, 5, 1, self.ui_state, "align_prop_truncate_steps")
-
-        # align prop truncate steps
-        components.label(frame, 6, 0, "AlignProp CFG Scale",
-                         tooltip="CFG Scale for inference steps of AlignProp calculations")
-        components.entry(frame, 6, 1, self.ui_state, "align_prop_cfg_scale")
-
-        layout.addWidget(frame)
 
     def __create_masked_frame(self, layout):
         frame = QFrame()
