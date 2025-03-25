@@ -11,7 +11,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
-#from modules.ui.ConfigList import ConfigList
+from modules.util.ui import components
+
 from modules.ui.OTConfigFrame import OTConfigFrame
 from modules.util.config.TrainConfig import TrainConfig
 from modules.util.config.TrainConfig import TrainEmbeddingConfig
@@ -99,91 +100,59 @@ class EmbeddingWidget(QFrame):
         self.layout_grid.addWidget(self.bottom_frame, 1, 0)
 
         # Top row
-        # 1) Close button (X)
+        # Close button (X)
         self.close_button = QPushButton("X", self.top_frame)
         self.close_button.setStyleSheet("background-color: #C00000; color: white; border-radius:2px;")
         self.close_button.setFixedSize(20, 20)
         self.close_button.clicked.connect(lambda: remove_command(self.i))
         self.top_frame_layout.addWidget(self.close_button, 0, 0)
 
-        # 2) Clone button (+)
+        # Clone button (+)
         self.clone_button = QPushButton("+", self.top_frame)
         self.clone_button.setStyleSheet("background-color: #00C000; color: white; border-radius:2px;")
         self.clone_button.setFixedSize(20, 20)
         self.clone_button.clicked.connect(lambda: clone_command(self.i, self.__randomize_uuid))
         self.top_frame_layout.addWidget(self.clone_button, 0, 1)
 
-        # 3) base embedding label
-        lbl_base_embed = QLabel("base embedding:")
-        lbl_base_embed.setToolTip("The base embedding to train on. Leave empty to create a new embedding.")
-        self.top_frame_layout.addWidget(lbl_base_embed, 0, 2)
+        top_frame = self.top_frame
+        bottom_frame = self.bottom_frame
 
-        # 3a) base embedding entry (like file_entry logic)
-        # We'll do a QLineEdit with a "browse" button if you want. For simplicity, just the line:
-        self.base_embed_edit = QLineEdit(self.top_frame)
-        # If you want path_modifier logic: you can handle signals or do it in code
-        self.base_embed_edit.setText(str(self.element.model_name or ""))
-        # Connect if you want to handle text changes
-        # self.base_embed_edit.editingFinished.connect(self.save_command)
-        self.top_frame_layout.addWidget(self.base_embed_edit, 0, 3)
+        # embedding model names
+        components.label(top_frame, 0, 2, "base embedding:",
+                         tooltip="The base embedding to train on. Leave empty to create a new embedding")
+        components.file_entry(
+            top_frame, 0, 3, self.ui_state, "model_name",
+            path_modifier=lambda x: Path(x).parent.absolute() if x.endswith(".json") else x
+        )
 
-        # 4) placeholder
-        lbl_placeholder = QLabel("placeholder:")
-        lbl_placeholder.setToolTip("The placeholder used when using the embedding in a prompt.")
-        self.top_frame_layout.addWidget(lbl_placeholder, 0, 4)
+        # placeholder
+        components.label(top_frame, 0, 4, "placeholder:",
+                         tooltip="The placeholder used when using the embedding in a prompt")
+        components.entry(top_frame, 0, 5, self.ui_state, "placeholder")
 
-        self.placeholder_edit = QLineEdit(self.top_frame)
-        self.placeholder_edit.setText(str(self.element.placeholder or ""))
-        self.top_frame_layout.addWidget(self.placeholder_edit, 0, 5)
+        # token count
+        components.label(top_frame, 0, 6, "token count:",
+                         tooltip="The token count used when creating a new embedding. Leave empty to auto detect from the initial embedding text.")
+        token_count_entry = components.entry(top_frame, 0, 7, self.ui_state, "token_count")
 
-        # 5) token count
-        lbl_token_count = QLabel("token count:")
-        lbl_token_count.setToolTip("Used when creating a new embedding. Leave empty to auto detect.")
-        self.top_frame_layout.addWidget(lbl_token_count, 0, 6)
+        # trainable
+        components.label(bottom_frame, 0, 0, "train:")
+        trainable_switch = components.switch(bottom_frame, 0, 1, self.ui_state, "train")
 
-        self.token_count_edit = QLineEdit(self.top_frame)
-        self.token_count_edit.setFixedWidth(40)
-        if self.element.token_count is not None:
-            self.token_count_edit.setText(str(self.element.token_count))
-        self.top_frame_layout.addWidget(self.token_count_edit, 0, 7)
+        # output embedding
+        components.label(bottom_frame, 0, 2, "output embedding:",
+                         tooltip="Output embeddings are calculated at the output of the text encoder, not the input. This can improve results for larger text encoders and lower VRAM usage.")
+        output_embedding_switch = components.switch(bottom_frame, 0, 3, self.ui_state, "is_output_embedding")
 
-        # Bottom row
-        # 1) train
-        lbl_train = QLabel("train:")
-        self.bottom_frame_layout.addWidget(lbl_train, 0, 0)
-        self.train_switch = QCheckBox(self.bottom_frame)
-        self.train_switch.setText("")
-        self.train_switch.setChecked(bool(self.element.train))
-        self.bottom_frame_layout.addWidget(self.train_switch, 0, 1)
+        # stop training after
+        components.label(bottom_frame, 0, 4, "stop training after:",
+                         tooltip="When to stop training the embedding")
+        components.time_entry(bottom_frame, 0, 5, self.ui_state, "stop_training_after", "stop_training_after_unit")
 
-        # 2) output embedding
-        lbl_out_embed = QLabel("output embedding:")
-        lbl_out_embed.setToolTip("If true, the embedding is at the output of the text encoder, not the input.")
-        self.bottom_frame_layout.addWidget(lbl_out_embed, 0, 2)
-        self.output_embedding_switch = QCheckBox(self.bottom_frame)
-        self.output_embedding_switch.setText("")
-        self.output_embedding_switch.setChecked(bool(self.element.is_output_embedding))
-        self.bottom_frame_layout.addWidget(self.output_embedding_switch, 0, 3)
-
-        # 3) stop training after (time_entry)
-        lbl_stop = QLabel("stop training after:")
-        lbl_stop.setToolTip("When to stop training the embedding.")
-        self.bottom_frame_layout.addWidget(lbl_stop, 0, 4)
-        # We'll do a line edit (or 2 line edits if you handle "stop_training_after" + "stop_training_after_unit")
-        self.stop_time_edit = QLineEdit(self.bottom_frame)
-        if self.element.stop_training_after is not None:
-            self.stop_time_edit.setText(str(self.element.stop_training_after))
-        self.bottom_frame_layout.addWidget(self.stop_time_edit, 0, 5)
-
-        # 4) initial embedding text
-        lbl_init_text = QLabel("initial embedding text:")
-        lbl_init_text.setToolTip("Initial text used when creating a new embedding.")
-        self.bottom_frame_layout.addWidget(lbl_init_text, 0, 6)
-
-        self.init_text_edit = QLineEdit(self.bottom_frame)
-        if self.element.initial_embedding_text:
-            self.init_text_edit.setText(self.element.initial_embedding_text)
-        self.bottom_frame_layout.addWidget(self.init_text_edit, 0, 7)
+        # initial embedding text
+        components.label(bottom_frame, 0, 6, "initial embedding text:",
+                         tooltip="The initial embedding text used when creating a new embedding")
+        components.entry(bottom_frame, 0, 7, self.ui_state, "initial_embedding_text")
 
     def __randomize_uuid(self, embedding_config):
         """
@@ -212,6 +181,7 @@ class EmbeddingWidget(QFrame):
 
         self.init_text_edit.setText(str(self.element.initial_embedding_text or ""))
 
+    # Obsolete method
     def place_in_list(self):
         """
         Replicates the .grid(...) usage. 
