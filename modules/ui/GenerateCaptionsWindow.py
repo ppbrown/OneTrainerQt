@@ -14,13 +14,15 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
+# It looks like these are not used, but the imports trigger BaseImageCaptionModel
 from modules.module.WDModel import WDModel
 from modules.module.BlipModel import BlipModel
 from modules.module.Blip2Model import Blip2Model
+
 from modules.module.BaseImageCaptionModel import BaseImageCaptionModel
 
-
 from modules.util.torch_util import default_device
+
 import torch
 
 class GenerateCaptionsWindow(QMainWindow):
