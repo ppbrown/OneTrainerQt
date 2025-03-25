@@ -1,4 +1,3 @@
-# bind_mousewheel.py
 
 
 import sys
@@ -51,7 +50,7 @@ def set_window_icon(window: QWidget) -> None:
 
     # Through the magic of Qt, this should theoretically work for all platforms
     try:
-        icon = QIcon(img_path)
+        icon = QIcon(str(img_path))
         window.setWindowIcon(icon)
 
     except Exception as e:
