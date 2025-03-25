@@ -585,5 +585,5 @@ class ConceptWindow(QDialog):
         return QPixmap.fromImage(qimg)
 
     def __ok(self):
-        self.concept.configure_element()
-        self.close()  # or self.accept() if you want to close the dialog
+        # self.concept.configure_element()
+        self.accept()  # or self.accept() if you want to close the dialog
