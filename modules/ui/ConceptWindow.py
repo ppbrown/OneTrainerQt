@@ -21,7 +21,7 @@ from PySide6.QtGui import QPixmap, QImage
 from modules.util import path_util
 from modules.util.config.ConceptConfig import ConceptConfig
 from modules.util.enum.BalancingStrategy import BalancingStrategy
-from modules.util.ui import components  # If you have replaced components with your own direct Qt usage, adapt accordingly
+from modules.util.ui import components
 from modules.util.ui.UIState import UIState
 
 # mgds pipeline modules
