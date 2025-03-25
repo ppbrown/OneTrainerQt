@@ -11,6 +11,8 @@ def main():
     app = QApplication(sys.argv)
     
     window = TrainUI()
+    window.setWindowTitle("OneTrainer")
+    window.setIcon(QIcon("resources/icons/icon.png"))
     window.showNormal()
 
     sys.exit(app.exec())
