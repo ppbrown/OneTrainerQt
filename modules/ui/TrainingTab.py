@@ -292,13 +292,6 @@ class TrainingTab(QWidget):
         frame_layout = QGridLayout(frame)
         row = 0
 
-        # attention mechanism
-        components.label(frame, row, 0, "Attention",
-                         tooltip="The attention mechanism used during training. This has a big effect on speed and memory consumption")
-        components.options(frame, row, 1, [str(x) for x in list(AttentionMechanism)], self.ui_state,
-                           "attention_mechanism")
-        row += 1
-
         # ema
         components.label(frame, row, 0, "EMA",
                          tooltip="EMA averages the training progress over many steps, better preserving different concepts in big datasets")
