@@ -7,7 +7,7 @@ from modules.ui.TrainUI import TrainUI
 import sys
 from PySide6.QtWidgets import QApplication
 
-from modules/util/ui/ui_utils import set_window_icon
+from modules.util.ui.ui_utils import set_window_icon
 
 def main():
     app = QApplication(sys.argv)
