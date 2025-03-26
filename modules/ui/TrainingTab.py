@@ -100,7 +100,7 @@ class TrainingTab(QWidget):
             self.__setup_sana_ui(col0_layout, col1_layout, col2_layout)
         elif self.train_config.model_type.is_hunyuan_video():
             self.__setup_hunyuan_video_ui(col0_layout, col1_layout, col2_layout)
-            
+
         col0_layout.addStretch()
         col1_layout.addStretch()
         col2_layout.addStretch()
@@ -213,10 +213,8 @@ class TrainingTab(QWidget):
     # The sub-frame creation methods
     # -----------------------------------------------------------------------
     def __create_base_frame(self, layout):
-        """
-        For "optimizer", "learning rate scheduler", "learning rate", etc.
-        We'll replicate them in a QGridLayout inside a QFrame.
-        """
+        wrapper = CollapsibleWidget("(Optimizer)")
+
         frame = QFrame()
         frame.setFrameShape(QFrame.StyledPanel)
         frame_layout = QGridLayout(frame)
@@ -289,12 +287,13 @@ class TrainingTab(QWidget):
                          tooltip="Clips the gradient norm. Leave empty to disable gradient clipping.")
         components.entry(frame, 10, 1, self.ui_state, "clip_grad_norm")
 
-        layout.addWidget(frame)
+        wrapper.setWidget(frame)
+        layout.addWidget(wrapper)
 
     def __create_base2_frame(self, layout, video_training_enabled=False):
         wrapper = CollapsibleWidget("(Misc)")
         frame = QFrame()
-        #frame.setFrameShape(QFrame.StyledPanel)
+        frame.setFrameShape(QFrame.StyledPanel)
         frame_layout = QGridLayout(frame)
         row = 0
 
@@ -377,6 +376,7 @@ class TrainingTab(QWidget):
         layout.addWidget(wrapper)
 
     def __create_text_encoder_frame(self, layout):
+        wrapper = CollapsibleWidget("(Text Encoder)")
         frame = QFrame()
         frame.setFrameShape(QFrame.StyledPanel)
         fl = QGridLayout(frame)
@@ -408,10 +408,11 @@ class TrainingTab(QWidget):
                          tooltip="The number of additional clip layers to skip. 0 = the model default")
         components.entry(frame, 4, 1, self.ui_state, "text_encoder_layer_skip")
 
-
-        layout.addWidget(frame)
+        wrapper.setWidget(frame)
+        layout.addWidget(wrapper)
 
     def __create_text_encoder_1_frame(self, layout, supports_include=False):
+        wrapper = CollapsibleWidget("(TextEncoder 1)")
         frame = QFrame()
         frame.setFrameShape(QFrame.StyledPanel)
         fl = QGridLayout(frame)
@@ -460,10 +461,11 @@ class TrainingTab(QWidget):
                          tooltip="The number of additional clip layers to skip. 0 = the model default")
         components.entry(frame, row, 1, self.ui_state, "text_encoder_layer_skip")
         row += 1
-
-        layout.addWidget(frame)
+        wrapper.setWidget(frame)
+        layout.addWidget(wrapper)
 
     def __create_text_encoder_2_frame(self, layout, supports_include=False):
+        wrapper = CollapsibleWidget("(TextEncoder 2)")
         frame = QFrame()
         frame.setFrameShape(QFrame.StyledPanel)
         fl = QGridLayout(frame)
@@ -513,9 +515,11 @@ class TrainingTab(QWidget):
         components.entry(frame, row, 1, self.ui_state, "text_encoder_2_layer_skip")
         row += 1
 
-        layout.addWidget(frame)
+        wrapper.setWidget(frame)
+        layout.addWidget(wrapper)
 
     def __create_text_encoder_3_frame(self, layout, supports_include=False):
+        wrapper = CollapsibleWidget("(TextEncoder 3)")
         frame = QFrame()
         frame.setFrameShape(QFrame.StyledPanel)
         fl = QGridLayout(frame)
@@ -565,61 +569,28 @@ class TrainingTab(QWidget):
         components.entry(frame, row, 1, self.ui_state, "text_encoder_3_layer_skip")
         row += 1
 
-        layout.addWidget(frame)
+        wrapper.setWidget(frame)
+        layout.addWidget(wrapper)
 
     def __create_embedding_frame(self, layout, supports_include: bool = False):
+        wrapper = CollapsibleWidget("(Embedding)")
         frame = QFrame()
         frame.setFrameShape(QFrame.StyledPanel)
         fl = QGridLayout(frame)
-        row = 0
 
-        if supports_include:
-            # include text encoder
-            components.label(frame, row, 0, "Include Text Encoder 3",
-                             tooltip="Includes text encoder 3 in the training run")
-            components.switch(frame, row, 1, self.ui_state, "text_encoder_3.include")
-            row += 1
+        components.label(frame, 0, 0, "Embeddings Learning Rate",
+                         tooltip="The learning rate of embeddings. Overrides the base learning rate")
+        components.entry(frame, 0, 1, self.ui_state, "embedding_learning_rate")
 
-        # train text encoder
-        components.label(frame, row, 0, "Train Text Encoder 3",
-                         tooltip="Enables training the text encoder 3 model")
-        components.switch(frame, row, 1, self.ui_state, "text_encoder_3.train")
-        row += 1
+        components.label(frame, 1, 0, "Preserve Embedding Norm",
+                         tooltip="Rescales each trained embedding to the median embedding norm")
+        components.switch(frame, 1, 1, self.ui_state, "preserve_embedding_norm")
 
-        # train text encoder embedding
-        components.label(frame, row, 0, "Train Text Encoder 3 Embedding",
-                         tooltip="Enables training embeddings for the text encoder 3 model")
-        components.switch(frame, row, 1, self.ui_state, "text_encoder_3.train_embedding")
-        row += 1
-
-        # dropout
-        components.label(frame, row, 0, "Dropout Probability",
-                         tooltip="The Probability for dropping the text encoder 3 conditioning")
-        components.entry(frame, row, 1, self.ui_state, "text_encoder_3.dropout_probability")
-        row += 1
-
-        # train text encoder epochs
-        components.label(frame, row, 0, "Stop Training After",
-                         tooltip="When to stop training the text encoder 3")
-        components.time_entry(frame, row, 1, self.ui_state, "text_encoder_3.stop_training_after",
-                              "text_encoder_3.stop_training_after_unit", supports_time_units=False)
-        row += 1
-
-        # text encoder learning rate
-        components.label(frame, row, 0, "Text Encoder 3 Learning Rate",
-                         tooltip="The learning rate of the text encoder 3. Overrides the base learning rate")
-        components.entry(frame, row, 1, self.ui_state, "text_encoder_3.learning_rate")
-        row += 1
-
-        # text encoder layer skip (clip skip)
-        components.label(frame, row, 0, "Text Encoder 3 Clip Skip",
-                         tooltip="The number of additional clip layers to skip. 0 = the model default")
-        components.entry(frame, row, 1, self.ui_state, "text_encoder_3_layer_skip")
-        row += 1
-
-        layout.addWidget(frame)
+        wrapper.setWidget(frame)
+        layout.addWidget(wrapper)
 
     def __create_unet_frame(self, layout):
+        wrapper = CollapsibleWidget("(UNet)")
         frame = QFrame()
         frame.setFrameShape(QFrame.StyledPanel)
         fl = QGridLayout(frame)
@@ -644,7 +615,8 @@ class TrainingTab(QWidget):
                          tooltip="Rescales the noise scheduler to a zero terminal signal to noise ratio and switches the model to a v-prediction target")
         components.switch(frame, 3, 1, self.ui_state, "rescale_noise_scheduler_to_zero_terminal_snr")
 
-        layout.addWidget(frame)
+        wrapper.setWidget(frame)
+        layout.addWidget(wrapper)
 
     def __create_prior_frame(self, layout):
         frame = QFrame()
@@ -669,6 +641,7 @@ class TrainingTab(QWidget):
         layout.addWidget(frame)
 
     def __create_transformer_frame(self, layout, supports_guidance_scale=False):
+        wrapper = CollapsibleWidget("(Transformer)")
         frame = QFrame()
         frame.setFrameShape(QFrame.StyledPanel)
         fl = QGridLayout(frame)
@@ -702,9 +675,11 @@ class TrainingTab(QWidget):
             components.entry(frame, 4, 1, self.ui_state, "prior.guidance_scale")
 
 
-        layout.addWidget(frame)
+        wrapper.setWidget(frame)
+        layout.addWidget(wrapper)
 
     def __create_noise_frame(self, layout):
+        wrapper = CollapsibleWidget("(Noise)")
         frame = QFrame()
         frame.setFrameShape(QFrame.StyledPanel)
         fl = QGridLayout(frame)
@@ -755,8 +730,8 @@ class TrainingTab(QWidget):
                          tooltip="Dynamically shift the timestep distribution based on resolution. Use the preview to see more details.")
         components.switch(frame, 8, 1, self.ui_state, "dynamic_timestep_shifting")
 
-
-        layout.addWidget(frame)
+        wrapper.setWidget(frame)
+        layout.addWidget(wrapper)
 
 
     def __create_masked_frame(self, layout):
@@ -793,6 +768,7 @@ class TrainingTab(QWidget):
         layout.addWidget(wrapper)
 
     def __create_loss_frame(self, layout, supports_vb_loss=False):
+        wrapper = CollapsibleWidget("(Loss)")
         frame = QFrame()
         frame.setFrameShape(QFrame.StyledPanel)
         fl = QGridLayout(frame)
@@ -832,7 +808,8 @@ class TrainingTab(QWidget):
                          tooltip="Selects the type of loss scaling to use during training. Functionally equated as: Loss * selection")
         components.options(frame, 6, 1, [str(x) for x in list(LossScaler)], self.ui_state, "loss_scaler")
 
-        layout.addWidget(frame)
+        wrapper.setWidget(frame)
+        layout.addWidget(wrapper)
 
     # -----------------------------------------------------------------------
     # Called when user clicks advanced "..." buttons or when we need to open subwindows
