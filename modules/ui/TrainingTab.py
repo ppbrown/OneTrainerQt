@@ -19,6 +19,7 @@ from modules.util.enum.TimestepDistribution import TimestepDistribution
 from modules.util.optimizer_util import change_optimizer
 from modules.util.ui.UIState import UIState
 from modules.util.ui import components
+from modules.util.ui.CollapsibleWidget import CollapsibleWidget
 
 
 from modules.ui.OffloadingWindow import OffloadingWindow
@@ -99,6 +100,10 @@ class TrainingTab(QWidget):
             self.__setup_sana_ui(col0_layout, col1_layout, col2_layout)
         elif self.train_config.model_type.is_hunyuan_video():
             self.__setup_hunyuan_video_ui(col0_layout, col1_layout, col2_layout)
+            
+        col0_layout.addStretch()
+        col1_layout.addStretch()
+        col2_layout.addStretch()
 
     # -------------------------------------------------------------------------
     # The specialized UI setups for each model type
@@ -287,8 +292,9 @@ class TrainingTab(QWidget):
         layout.addWidget(frame)
 
     def __create_base2_frame(self, layout, video_training_enabled=False):
+        wrapper = CollapsibleWidget("(Misc)")
         frame = QFrame()
-        frame.setFrameShape(QFrame.StyledPanel)
+        #frame.setFrameShape(QFrame.StyledPanel)
         frame_layout = QGridLayout(frame)
         row = 0
 
@@ -367,8 +373,8 @@ class TrainingTab(QWidget):
                          tooltip="Enables circular padding for all conv layers to better train seamless images")
         components.switch(frame, row, 1, self.ui_state, "force_circular_padding")
 
-
-        layout.addWidget(frame)
+        wrapper.setWidget(frame)
+        layout.addWidget(wrapper)
 
     def __create_text_encoder_frame(self, layout):
         frame = QFrame()
@@ -754,9 +760,12 @@ class TrainingTab(QWidget):
 
 
     def __create_masked_frame(self, layout):
+        wrapper = CollapsibleWidget("(Masking)")
+
         frame = QFrame()
         frame.setFrameShape(QFrame.StyledPanel)
-        fl = QGridLayout(frame)
+        fl = QGridLayout()
+        frame.setLayout(fl)
         
         # Masked Training
         components.label(frame, 0, 0, "Masked Training",
@@ -778,7 +787,10 @@ class TrainingTab(QWidget):
                          tooltip="When masked training is enabled, normalizes the loss for each sample based on the sizes of the masked region")
         components.switch(frame, 3, 1, self.ui_state, "normalize_masked_area_loss")
 
-        layout.addWidget(frame)
+        wrapper.setWidget(frame)
+
+
+        layout.addWidget(wrapper)
 
     def __create_loss_frame(self, layout, supports_vb_loss=False):
         frame = QFrame()

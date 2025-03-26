@@ -12,6 +12,8 @@ import sys
 class CollapsibleWidget(QFrame):
     def __init__(self, title: str, parent=None):
         super().__init__(parent)
+        self.contentArea = None
+        
         self.setFrameShape(QFrame.StyledPanel)
 
         # Create a toggle button that will serve as the header.
@@ -28,7 +30,7 @@ class CollapsibleWidget(QFrame):
         self.mainLayout.addWidget(self.toggleButton)
 
     def setWidget(self, widget: QWidget):
-        contentArea = widget
+        self.contentArea = widget
         self.mainLayout.addWidget(widget)
 
     def widget(self) -> QWidget:
