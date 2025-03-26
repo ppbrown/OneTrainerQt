@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     # Sample widget 1
     dataWidget = CollapsibleWidget("data")
-    dataWidget.setWidget(QTextEdit("Data subwidget content")
+    dataWidget.setWidget(QTextEdit("Data subwidget content"))
     
     # sample widget 2
     processingWidget = CollapsibleWidget("processing")
@@ -69,5 +69,3 @@ if __name__ == "__main__":
     window.resize(400, 300)
     window.show()
     sys.exit(app.exec())
-
-
