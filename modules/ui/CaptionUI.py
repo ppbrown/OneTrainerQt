@@ -11,22 +11,21 @@ can also be used as a standalone program, via scripts/caption_ui.py
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QLabel, QPushButton, QCheckBox, QLineEdit,
     QVBoxLayout, QHBoxLayout, QGridLayout, QFileDialog,
-    QMessageBox, QListWidget, QListWidgetItem
+    QMessageBox
 )
 from PySide6.QtCore import Qt, QPoint
-from PySide6.QtGui import QPixmap, QImage, QMouseEvent, QAction, QKeyEvent
+from PySide6.QtGui import QPixmap, QImage, QMouseEvent, QKeyEvent
+
+from modules.ui.DirectoryBrowser import DirectoryBrowser
 
 from modules.module.ClipSegModel import ClipSegModel
 from modules.module.MaskByColor import MaskByColor
 from modules.module.RembgHumanModel import RembgHumanModel
 from modules.module.RembgModel import RembgModel
-
 from modules.ui.GenerateCaptionsWindow import GenerateCaptionsWindow
 from modules.ui.GenerateMasksWindow import GenerateMasksWindow
-
 from modules.util import path_util
 from modules.util.torch_util import default_device
-import torch
 
 import cv2
 import numpy as np
@@ -37,17 +36,16 @@ class CaptionUI(QMainWindow):
     def __init__(
         self,
         parent=None,
-        initial_dir: str|None = None,
+        initial_dir: str | None = None,
         initial_include_subdirectories: bool = False
     ):
         super().__init__(parent)
 
         self.setWindowTitle("OneTrainer")
-
         self.show()
         self.raise_()
 
-        self.dir = initial_dir
+        self.dir = initial_dir if initial_dir is not None else ""
         self.config_ui_data = {
             "include_subdirectories": initial_include_subdirectories
         }
@@ -70,8 +68,6 @@ class CaptionUI(QMainWindow):
 
         self.masking_model = None
 
-
-        # List of relative image paths in self.dir
         self.image_rel_paths = []
         self.current_image_index = -1
 
@@ -86,9 +82,8 @@ class CaptionUI(QMainWindow):
         self.display_only_mask = False
         self.mask_editing_mode = 'draw'
         self.enable_mask_editing = False
-        # For prompt editing
-        self.prompt_text = ""
 
+        self.prompt_text = ""
         self.brush_alpha = 1.0
 
         # -------------------------------------------------------------------
@@ -98,20 +93,19 @@ class CaptionUI(QMainWindow):
         self.setCentralWidget(central_widget)
 
         main_layout = QVBoxLayout(central_widget)
-        # "Top bar" row
+        # Top bar
         self.top_bar_layout = QHBoxLayout()
         main_layout.addLayout(self.top_bar_layout)
         self.setup_top_bar()
 
-        # "Bottom" area: left column = file list, right column = content
+        # Bottom area: left column = DirectoryBrowser, right column = content
         self.bottom_layout = QHBoxLayout()
         main_layout.addLayout(self.bottom_layout, stretch=1)
 
-        # Left column: scrollable list of images
-        self.file_list_widget = QListWidget()
-        self.file_list_widget.setMinimumWidth(150)
-        self.file_list_widget.itemClicked.connect(self.handle_file_clicked)
-        self.bottom_layout.addWidget(self.file_list_widget, 0)
+        # Replace the custom QListWidget with a DirectoryBrowser widget.
+        # Pass a callback that receives (directory, file_name) when a file is clicked.
+        self.directory_browser = DirectoryBrowser(file_clicked_callback=self.on_file_selected)
+        self.bottom_layout.addWidget(self.directory_browser, 0)
 
         # Center content (image, mask, caption)
         self.content_widget = QWidget()
@@ -119,11 +113,8 @@ class CaptionUI(QMainWindow):
         self.bottom_layout.addWidget(self.content_widget, 1)
         self.setup_content_column()
 
-        # -------------------------------------------------------------------
-        # Initialize directory and image list
-        # -------------------------------------------------------------------
+        # Initialize directory and image list.
         self.load_directory(self.config_ui_data["include_subdirectories"])
-
 
     def setup_top_bar(self):
         open_button = QPushButton("Open")
@@ -147,14 +138,9 @@ class CaptionUI(QMainWindow):
             explorer_button.clicked.connect(self.open_in_explorer)
             self.top_bar_layout.addWidget(explorer_button)
 
-        # "Include subdirectories" switch -> QCheckBox
         self.include_subdirectories_checkbox = QCheckBox("include subdirectories")
-        self.include_subdirectories_checkbox.setChecked(
-            self.config_ui_data["include_subdirectories"]
-        )
-        self.include_subdirectories_checkbox.stateChanged.connect(
-            self.toggle_include_subdirectories
-        )
+        self.include_subdirectories_checkbox.setChecked(self.config_ui_data["include_subdirectories"])
+        self.include_subdirectories_checkbox.stateChanged.connect(self.toggle_include_subdirectories)
         self.top_bar_layout.addWidget(self.include_subdirectories_checkbox)
 
         # Add some stretch to push the "Help" button to the right
@@ -170,22 +156,38 @@ class CaptionUI(QMainWindow):
         self.config_ui_data["include_subdirectories"] = True if state == 2 else False
 
     # -----------------------------------------------------------------------
-    # File list (left column)
+    # File selection callback (from DirectoryBrowser)
     # -----------------------------------------------------------------------
-    def rebuild_file_list_ui(self):
-        self.file_list_widget.clear()
+    def on_file_selected(self, directory, file_name):
+        # When a file is clicked in the DirectoryBrowser,
+        # update the current directory and scan it for supported images.
+        self.dir = directory
+        self.scan_directory(self.config_ui_data["include_subdirectories"])
+        # Find the index in the scanned image list that matches the clicked file.
+        selected_index = -1
         for i, rel_path in enumerate(self.image_rel_paths):
-            item = QListWidgetItem(rel_path)
-            item.setData(Qt.UserRole, i)
-            self.file_list_widget.addItem(item)
-
-    def handle_file_clicked(self, item):
-        index = item.data(Qt.UserRole)
-
-        self.switch_image(index)
+            if os.path.basename(rel_path) == file_name:
+                selected_index = i
+                break
+        if selected_index >= 0:
+            self.switch_image(selected_index)
+        else:
+            # If not found (perhaps the file isn’t an image), try loading it directly.
+            fullpath = os.path.join(directory, file_name)
+            try:
+                self.pil_image = Image.open(fullpath).convert('RGB')
+                self.image_width = self.pil_image.width
+                self.image_height = self.pil_image.height
+                scale = self.image_size / max(self.pil_image.width, self.pil_image.height)
+                new_w = int(self.pil_image.width * scale)
+                new_h = int(self.pil_image.height * scale)
+                self.pil_image = self.pil_image.resize((new_w, new_h), Image.Resampling.LANCZOS)
+                self.set_image_on_label(self.pil_image)
+            except Exception:
+                traceback.print_exc()
 
     # -----------------------------------------------------------------------
-    # Content column (center areas)
+    # Center Content Setup
     # -----------------------------------------------------------------------
     def setup_content_column(self):
         """
@@ -216,18 +218,16 @@ class CaptionUI(QMainWindow):
         alpha_label = QLabel("Brush Alpha")
         self.content_layout.addWidget(alpha_label, 0, 4)
 
-        # -- Row 1: image display --
+        # Row 1: image display
         self.image_label = ClickableLabel("")
-        # Let the label expand only to a certain size
         self.image_label.setFixedSize(self.image_size, self.image_size)
-        # Enable mouse tracking to receive mouseMoveEvents
         self.image_label.setMouseTracking(True)
         self.image_label.mouse_moved.connect(self.edit_mask_mouse_move)
         self.image_label.mouse_pressed.connect(self.edit_mask_mouse_press)
         self.image_label.wheel_scrolled.connect(self.draw_mask_radius)
         self.content_layout.addWidget(self.image_label, 1, 0, 1, 5)
 
-        # -- Row 2: prompt entry --
+        # Row 2: prompt entry
         self.prompt_line = QLineEdit()
         self.prompt_line.returnPressed.connect(self.save_current)
         self.content_layout.addWidget(self.prompt_line, 2, 0, 1, 5)
@@ -243,27 +243,26 @@ class CaptionUI(QMainWindow):
             self.brush_alpha = 1.0
 
     # -----------------------------------------------------------------------
-    # Directory scanning and loading
+    # Directory scanning and image loading (for next/prev functionality)
     # -----------------------------------------------------------------------
     def load_directory(self, include_subdirectories=False):
+        if self.dir and os.path.isdir(self.dir):
+            # Optionally, you could update DirectoryBrowser's path here.
+            pass
         self.scan_directory(include_subdirectories)
-        self.rebuild_file_list_ui()
-
         if len(self.image_rel_paths) > 0:
             self.switch_image(0)
         else:
             self.switch_image(-1)
-
-        # Focus on the prompt line
         self.prompt_line.setFocus()
 
     def scan_directory(self, include_subdirectories=False):
         def __is_supported_image_extension(filename):
             name, ext = os.path.splitext(filename)
+            # Uses your existing helper function to check supported image extensions.
             return path_util.is_supported_image_extension(ext) and not name.endswith("-masklabel")
 
         self.image_rel_paths.clear()
-
         if not self.dir or not os.path.isdir(self.dir):
             return
 
@@ -280,15 +279,10 @@ class CaptionUI(QMainWindow):
                     self.image_rel_paths.append(rel)
 
     # -----------------------------------------------------------------------
-    # Image, Mask, Prompt loading
+    # Image, Mask, Prompt Loading and Switching
     # -----------------------------------------------------------------------
-
-    # Returns Image object for self.current_image_index
     def load_image(self):
-        if (
-            len(self.image_rel_paths) > 0 and
-            0 <= self.current_image_index < len(self.image_rel_paths)
-        ):
+        if self.image_rel_paths and 0 <= self.current_image_index < len(self.image_rel_paths):
             image_rel = self.image_rel_paths[self.current_image_index]
             fullpath = os.path.join(self.dir, image_rel)
             try:
@@ -296,14 +290,10 @@ class CaptionUI(QMainWindow):
             except Exception:
                 traceback.print_exc()
                 print(f"Could not open image {fullpath}")
-        # Fallback
         return Image.new("RGB", (512, 512), (0, 0, 0))
 
     def load_mask(self):
-        if (
-            len(self.image_rel_paths) > 0 and
-            0 <= self.current_image_index < len(self.image_rel_paths)
-        ):
+        if self.image_rel_paths and 0 <= self.current_image_index < len(self.image_rel_paths):
             image_rel = self.image_rel_paths[self.current_image_index]
             mask_path = os.path.splitext(image_rel)[0] + "-masklabel.png"
             mask_path = os.path.join(self.dir, mask_path)
@@ -316,10 +306,7 @@ class CaptionUI(QMainWindow):
 
     # probably should be called "load_caption"
     def load_prompt(self):
-        if (
-            len(self.image_rel_paths) > 0 and
-            0 <= self.current_image_index < len(self.image_rel_paths)
-        ):
+        if self.image_rel_paths and 0 <= self.current_image_index < len(self.image_rel_paths):
             image_rel = self.image_rel_paths[self.current_image_index]
             prompt_path = os.path.splitext(image_rel)[0] + ".txt"
             prompt_path = os.path.join(self.dir, prompt_path)
@@ -331,19 +318,13 @@ class CaptionUI(QMainWindow):
                     return ""
         return ""
 
-    # -----------------------------------------------------------------------
-    # Image switching
-    # -----------------------------------------------------------------------
     def switch_image(self, index: int):
         if index < 0 or index >= len(self.image_rel_paths):
-            # no images
             blank_img = Image.new("RGB", (512, 512), (0, 0, 0))
             self.set_image_on_label(blank_img)
             return
 
         self.current_image_index = index
-        self.file_list_widget.setCurrentRow(index)
-
         self.pil_image = self.load_image()
         self.pil_mask = self.load_mask()
         self.prompt_text = self.load_prompt()
@@ -355,7 +336,6 @@ class CaptionUI(QMainWindow):
             scale = self.image_size / max(self.pil_image.width, self.pil_image.height)
             new_w = int(self.pil_image.width * scale)
             new_h = int(self.pil_image.height * scale)
-
             self.pil_image = self.pil_image.resize((new_w, new_h), Image.Resampling.LANCZOS)
             self.refresh_image()
         else:
@@ -363,7 +343,6 @@ class CaptionUI(QMainWindow):
             self.set_image_on_label(blank_img)
 
     def refresh_image(self):
-        """ Combine self.pil_image + self.pil_mask if necessary and show on the image_label. """
         if not self.pil_image:
             return
         if self.pil_mask:
@@ -376,14 +355,12 @@ class CaptionUI(QMainWindow):
             else:
                 np_image = np.array(self.pil_image).astype(np.float32) / 255.0
                 np_mask = np.array(resized_mask).astype(np.float32) / 255.0
-                # normalize mask between 0.3 - 1.0
                 norm_min = 0.3
                 mask_min = np_mask.min()
                 if mask_min == 0:
                     np_mask = np_mask * (1.0 - norm_min) + norm_min
                 elif mask_min < 1:
                     np_mask = ((np_mask - mask_min) / (1.0 - mask_min)) * (1.0 - norm_min) + norm_min
-
                 np_masked_image = (np_image * np_mask * 255.0).astype(np.uint8)
                 masked_pil = Image.fromarray(np_masked_image, mode="RGB")
                 self.set_image_on_label(masked_pil)
@@ -391,9 +368,6 @@ class CaptionUI(QMainWindow):
             self.set_image_on_label(self.pil_image)
 
     def set_image_on_label(self, pil_image):
-        """
-        Convert PIL -> QPixmap, set on self.image_label.
-        """
         data = pil_image.tobytes("raw", "RGB")
         qimg = QImage(
             data, pil_image.width, pil_image.height,
@@ -403,14 +377,9 @@ class CaptionUI(QMainWindow):
         self.image_label.setPixmap(pix)
 
     # -----------------------------------------------------------------------
-    # Mouse/Keyboard handling for next/prev images and mask editing
+    # Mouse/Keyboard Handling and Mask Editing
     # -----------------------------------------------------------------------
     def keyPressEvent(self, event: QKeyEvent):
-        """
-        Overall keypress handling for the QMainWindow.
-        If your prompt line is focused, you can also handle it inside
-        a custom event filter or by subclassing QLineEdit.
-        """
         if event.key() == Qt.Key_Up:
             self.previous_image()
             return
@@ -421,7 +390,6 @@ class CaptionUI(QMainWindow):
             self.save_current()
             return
 
-        # Check modifiers for Ctrl+D, Ctrl+F, Ctrl+M
         if event.modifiers() & Qt.ControlModifier:
             if event.key() == Qt.Key_D:
                 self.draw_mask_editing_mode()
@@ -443,7 +411,6 @@ class CaptionUI(QMainWindow):
         if self.current_image_index + 1 < len(self.image_rel_paths):
             self.switch_image(self.current_image_index + 1)
 
-    # Mask editing mouse events come from ClickableLabel signals
     def edit_mask_mouse_move(self, pos: QPoint):
         if not self.enable_mask_editing:
             return
@@ -456,16 +423,14 @@ class CaptionUI(QMainWindow):
 
     def edit_mask_common(self, pos: QPoint, is_press=False, button=None):
         if (
-            len(self.image_rel_paths) == 0 or
+            not self.image_rel_paths or
             self.current_image_index >= len(self.image_rel_paths) or
             self.current_image_index < 0
         ):
             return
 
-        # Convert from label coords to actual image coords
         event_x = pos.x()
         event_y = pos.y()
-        # Map to full-size image
         start_x = int(event_x / self.pil_image.width * self.image_width)
         start_y = int(event_y / self.pil_image.height * self.image_height)
         end_x = int(self.mask_draw_x / self.pil_image.width * self.image_width)
@@ -474,20 +439,16 @@ class CaptionUI(QMainWindow):
         self.mask_draw_x = event_x
         self.mask_draw_y = event_y
 
-        # Distinguish left vs right
         is_left = (button == Qt.LeftButton)
         is_right = (button == Qt.RightButton)
 
         if self.mask_editing_mode == 'draw':
-            if is_press:  # Only draw on press or drag? Up to you
+            if is_press:
                 self.draw_mask(start_x, start_y, end_x, end_y, is_left, is_right)
         elif self.mask_editing_mode == 'fill':
             if is_press:
                 self.fill_mask(start_x, start_y, end_x, end_y, is_left, is_right)
 
-    # -----------------------------------------------------------------------
-    # Mask editing modes
-    # -----------------------------------------------------------------------
     def draw_mask(self, start_x, start_y, end_x, end_y, is_left, is_right):
         color = None
         if is_left:
@@ -498,8 +459,6 @@ class CaptionUI(QMainWindow):
 
         if color is not None:
             if self.pil_mask is None:
-                # If we have no mask, create one
-                # If we're adding -> black background. If removing -> white background.
                 if is_left:
                     self.pil_mask = Image.new('RGB', (self.image_width, self.image_height), (0, 0, 0))
                 else:
@@ -508,12 +467,9 @@ class CaptionUI(QMainWindow):
             radius = int(self.mask_draw_radius * max(self.pil_mask.width, self.pil_mask.height))
 
             draw_obj = ImageDraw.Draw(self.pil_mask)
-            # line
-            draw_obj.line((start_x, start_y, end_x, end_y), fill=color, width=(2*radius + 1))
-            # start ellipse
+            draw_obj.line((start_x, start_y, end_x, end_y), fill=color, width=(2 * radius + 1))
             draw_obj.ellipse((start_x - radius, start_y - radius,
                               start_x + radius, start_y + radius), fill=color)
-            # end ellipse
             draw_obj.ellipse((end_x - radius, end_y - radius,
                               end_x + radius, end_y + radius), fill=color)
 
@@ -542,7 +498,6 @@ class CaptionUI(QMainWindow):
                 self.refresh_image()
 
     def draw_mask_radius(self, delta):
-        # Wheel up = Increase radius, wheel down = Decrease radius
         multiplier = 1.0 + (delta * 0.05)
         self.mask_draw_radius = max(0.0025, self.mask_draw_radius * multiplier)
 
@@ -556,12 +511,9 @@ class CaptionUI(QMainWindow):
         self.display_only_mask = not self.display_only_mask
         self.refresh_image()
 
-    # -----------------------------------------------------------------------
-    # Saving
-    # -----------------------------------------------------------------------
     def save_current(self):
         if (
-            len(self.image_rel_paths) == 0 or
+            not self.image_rel_paths or
             self.current_image_index >= len(self.image_rel_paths) or
             self.current_image_index < 0
         ):
@@ -575,20 +527,17 @@ class CaptionUI(QMainWindow):
 
         self.prompt_text = self.prompt_line.text()
 
-        # Save prompt
         try:
             with open(prompt_path, "w", encoding="utf-8") as f:
                 f.write(self.prompt_text)
         except Exception:
             traceback.print_exc()
 
-        # Save mask
         if self.pil_mask:
             try:
                 self.pil_mask.save(mask_path)
             except Exception:
                 traceback.print_exc()
-
 
     def open_directory(self):
         new_dir = QFileDialog.getExistingDirectory(self, "Select Directory", self.dir or "")
@@ -597,7 +546,6 @@ class CaptionUI(QMainWindow):
             self.load_directory(self.config_ui_data["include_subdirectories"])
 
     def open_mask_window(self):
-        # Show GenerateMasksWindow (PySide version would typically be QDialog)
         dialog = GenerateMasksWindow(self, self.dir, self.config_ui_data["include_subdirectories"])
         dialog.exec()
         self.switch_image(self.current_image_index)
@@ -613,7 +561,7 @@ class CaptionUI(QMainWindow):
     def open_in_explorer(self):
         try:
             if (
-                len(self.image_rel_paths) == 0 or
+                not self.image_rel_paths or
                 self.current_image_index >= len(self.image_rel_paths) or
                 self.current_image_index < 0
             ):
@@ -643,20 +591,12 @@ class CaptionUI(QMainWindow):
             if not isinstance(self.masking_model, MaskByColor):
                 self.masking_model = MaskByColor(default_device, torch.float32)
 
-
-
-
-    # -----------------------------------------------------------------------
-    # Help
-    # -----------------------------------------------------------------------
     def print_help(self):
         QMessageBox.information(self, "Help", self.help_text)
 
-
-
-# -----------------------------------------------------------------------------
-# Helper: a custom clickable label that can emit signals for press/move/wheel
-# -----------------------------------------------------------------------------
+# -------------------------------------------------------------------------
+# Helper: ClickableLabel class 
+# -------------------------------------------------------------------------
 from PySide6.QtCore import Signal
 
 class ClickableLabel(QLabel):
@@ -679,11 +619,9 @@ class ClickableLabel(QLabel):
 
     def mousePressEvent(self, event: QMouseEvent):
         super().mousePressEvent(event)
-        if event.button() == Qt.LeftButton or event.button() == Qt.RightButton:
-            # If the label is used as a file list entry, we just want to switch_image on left click
+        if event.button() in (Qt.LeftButton, Qt.RightButton):
             if self.index >= 0:
                 self.clicked_index.emit(self.index)
-            # If the label is the main image_label, we want to handle mask editing
             self.mouse_pressed.emit(event.pos(), event.button())
 
     def mouseMoveEvent(self, event: QMouseEvent):
@@ -691,12 +629,7 @@ class ClickableLabel(QLabel):
         self.mouse_moved.emit(event.pos())
 
     def wheelEvent(self, event):
-        """
-        The direction of the wheel can be read from event.angleDelta().y()
-        Typically a positive value = wheel up, negative = wheel down
-        """
         delta_y = event.angleDelta().y()
-        # Normalize to +1 or -1
         direction = 1 if delta_y > 0 else -1
         self.wheel_scrolled.emit(direction)
         event.accept()
