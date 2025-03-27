@@ -1,101 +1,58 @@
-import platform
+
+
 import sys
-import tkinter as tk
 from collections.abc import Callable
+from typing import Any, Optional
 from pathlib import Path
-from tkinter import EventType
-from typing import Any
 
-from customtkinter import CTk, CTkToplevel
+from PySide6.QtCore import QObject, QEvent
+from PySide6.QtGui import QWheelEvent, QIcon
+from PySide6.QtWidgets import QWidget
 
+"""
+Usage:
+def on_wheel(delta: int, event: QWheelEvent):
+    print("Scrolled:", "up" if delta > 0 else "down")
 
+bind_mousewheel(myWidget, {myWidget}, on_wheel)
+"""
 def bind_mousewheel(
-    widget: Any,
-    whitelist: set[Any] | None,
-    callback: Callable[[int, Any], None],
+    widget: QWidget,
+    whitelist: Optional[set[QWidget]],
+    callback: Callable[[int, QWheelEvent], None]
 ):
-    assert whitelist is None or isinstance(whitelist, set)
 
-    is_mac = sys.platform == "darwin"
+    class MouseWheelFilter(QObject):
+        def eventFilter(self, obj: QObject, event: QEvent) -> bool:
+            if event.type() == QEvent.Type.Wheel and isinstance(event, QWheelEvent):
+                if whitelist is not None and obj not in whitelist:
+                    return False
+                # angleDelta().y() is positive => scroll up, negative => scroll down
+                delta_y = event.angleDelta().y()
+                sign = 1 if delta_y > 0 else -1
+                callback(sign, event)
+                return True
+            return super().eventFilter(obj, event)
 
-    def process_mousewheel(raw_event):
-        # If whitelist was provided, only respond to events on allowed widgets.
-        if whitelist is not None and raw_event.widget not in whitelist:
-            return
+    mw_filter = MouseWheelFilter(widget)
+    widget.installEventFilter(mw_filter)
 
-        # Cross-platform mouse scroll handler.
-        # SEE: Section "54.6" of https://tkdocs.com/shipman/tkinter.pdf, which
-        # describes the `.delta` and `.num` property behaviors on each platform.
-        if raw_event.type == EventType.MouseWheel:  # Windows and Mac.
-            # Positive sign means scroll up, negative sign means scroll down.
-            # Windows uses a multiple of 120. Macs use the raw number of steps.
-            delta = (
-                raw_event.delta if is_mac else int(raw_event.delta / 120)
-            )
-        elif raw_event.type == EventType.ButtonPress:  # Linux.
-            # Button 4 means scroll up. Button 5 means scroll down.
-            # NOTE: Tk only supports binding mouse buttons 1, 2 and 3. The 4/5
-            # values are ONLY used for indicating mousewheel scrolling.
-            delta = 1 if raw_event.num == 4 else -1
-        else:
-            raise Exception(f"unhandled event type: {raw_event.type.name}")
 
-        # We provide the raw event too, if they want to analyze it further.
-        callback(delta, raw_event)
-
-    widget.bind("<MouseWheel>", process_mousewheel)
-    if sys.platform == "linux":
-        widget.bind("<Button-4>", process_mousewheel)
-        widget.bind("<Button-5>", process_mousewheel)
-
-def set_window_icon(window: tk.Tk | tk.Toplevel | CTk | CTkToplevel) -> None:
+def set_window_icon(window: QWidget) -> None:
     """Set the application window icon based on the current platform
 
     Args:
-        window: The window object (Tk, Toplevel, CTk, CTkToplevel) to set the icon for
+        window: The window object to set the icon for
     """
-    # Early exit if not a valid window
-    if not hasattr(window, "wm_title"):
-        return
 
     # Get icon paths based on platform
     icon_dir = Path("resources/icons")
-    system = platform.system()
+    img_path = icon_dir / "icon.png"
 
+    # Through the magic of Qt, this should theoretically work for all platforms
     try:
-        # Check if it's a root window or toplevel window
-        is_root_window = isinstance(window, (tk.Tk | CTk))
-
-        if system == "Windows":
-            # Windows - use .ico file
-            ico_path = icon_dir / "icon.ico"
-            if ico_path.exists():
-                window.wm_iconbitmap(str(ico_path))
-
-        elif system == "Linux":
-            # Linux - use .png with PhotoImage
-            png_path = icon_dir / "icon.png"
-            if png_path.exists():
-                if is_root_window:
-                    # For root windows - set immediately
-                    window._icon_image_ref = tk.PhotoImage(file=str(png_path))
-                    window.iconphoto(False, window._icon_image_ref)
-                else:
-                    # For toplevels - use delayed setting
-                    window.wm_iconbitmap() # Clear any existing icon
-
-                    def set_icon():
-                        try:
-                            window._icon_image_ref = tk.PhotoImage(file=str(png_path))
-                            window.iconphoto(False, window._icon_image_ref)
-                        except Exception as e:
-                            print(f"Failed to set Linux window icon: {e}")
-
-                    window.after(100, set_icon) # Delay on linux as found less reliable
-
-        elif system == "Darwin":  # macOS
-            # macOS uses app bundles for icons, Tkinter support is limited
-            pass
+        icon = QIcon(str(img_path))
+        window.setWindowIcon(icon)
 
     except Exception as e:
         print(f"Failed to set window icon: {e}")
