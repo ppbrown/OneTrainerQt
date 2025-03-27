@@ -76,17 +76,23 @@ class DirectoryBrowser(QWidget):
         # this wont work with its filters
         #self.list_view.setRootIndex(self.file_model.index(selected_dir))
 
+    # User has directly typed/pasted a path in
     def on_path_entered(self):
         new_path = self.path_display.text()
+        # On Windows, ensure the path ends with a backslash if it's a drive letter.
+        import platform
+        if platform.system() == "Windows" and len(new_path) == 2 and new_path[1] == ":":
+            new_path += "\\"
         if QDir(new_path).exists():
-            # Update tree and list views to reflect the entered path.
-            index = self.tree_model.index(new_path)
-            self.tree_view.setCurrentIndex(index)
-            self.tree_view.expand(index)
-            self.list_view.setRootIndex(self.file_model.index(new_path))
+            # Update both models by calling setRootPath and using the returned index.
+            tree_index = self.tree_model.setRootPath(new_path)
+            self.tree_view.setRootIndex(tree_index)
+            file_index = self.file_model.setRootPath(new_path)
+            self.list_view.setRootIndex(file_index)
         else:
             QMessageBox.warning(self, "Invalid Directory",
                                 f"The directory '{new_path}' does not exist.")
+
 
     def on_file_clicked(self, index):
         # Only proceed if the clicked item is not a directory.
