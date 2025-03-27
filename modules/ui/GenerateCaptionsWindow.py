@@ -18,6 +18,7 @@ from PySide6.QtCore import Qt
 from modules.module.WDModel import WDModel
 from modules.module.BlipModel import BlipModel
 from modules.module.Blip2Model import Blip2Model
+from modules.module.Moondream2Model import Moondream2Model
 
 from modules.module.BaseImageCaptionModel import BaseImageCaptionModel
 
