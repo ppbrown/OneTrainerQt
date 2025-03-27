@@ -11,7 +11,7 @@ can also be used as a standalone program, via scripts/caption_ui.py
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QLabel, QPushButton, QCheckBox, QLineEdit,
     QVBoxLayout, QHBoxLayout, QGridLayout, QFileDialog,
-    QMessageBox
+    QMessageBox, QSplitter
 )
 from PySide6.QtCore import Qt, QPoint
 from PySide6.QtGui import QPixmap, QImage, QMouseEvent, QKeyEvent
@@ -99,18 +99,19 @@ class CaptionUI(QMainWindow):
         self.setup_top_bar()
 
         # Bottom area: left column = DirectoryBrowser, right column = content
-        self.bottom_layout = QHBoxLayout()
-        main_layout.addLayout(self.bottom_layout, stretch=1)
+        self.bottom_splitter = QSplitter(Qt.Horizontal)
+
+        main_layout.addWidget(self.bottom_splitter, stretch=1)
 
         # Replace the custom QListWidget with a DirectoryBrowser widget.
         # Pass a callback that receives (directory, file_name) when a file is clicked.
         self.directory_browser = DirectoryBrowser(file_clicked_callback=self.on_file_selected)
-        self.bottom_layout.addWidget(self.directory_browser, 0)
+        self.bottom_splitter.addWidget(self.directory_browser)
 
         # Center content (image, mask, caption)
         self.content_widget = QWidget()
         self.content_layout = QGridLayout(self.content_widget)
-        self.bottom_layout.addWidget(self.content_widget, 1)
+        self.bottom_splitter.addWidget(self.content_widget)
         self.setup_content_column()
 
         # Initialize directory and image list.
