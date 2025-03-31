@@ -164,9 +164,10 @@ class BaseImageCaptionModel(metaclass=ABCMeta):
 
         if mode == 'replace' or mode == 'fill':
             caption_sample.set_caption(predicted_caption)
-
-        if mode == 'add':
+        elif mode == 'add':
             caption_sample.add_caption(predicted_caption)
+        else:
+            print("DEBUG: BaseImageCaptionModel.caption_image unrecognized mode:", mode)
 
         caption_sample.save_caption()
 
@@ -199,6 +200,7 @@ class BaseImageCaptionModel(metaclass=ABCMeta):
         if progress_callback is not None:
             progress_callback(0, len(filenames))
         for i, filename in enumerate(tqdm(filenames)):
+        #for i, filename in enumerate(filenames):
             try:
                 self.caption_image(filename, initial_caption, caption_prefix, caption_postfix, mode)
             except Exception:
