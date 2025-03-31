@@ -110,7 +110,7 @@ class CaptionUI(QMainWindow):
 
         # Replace the custom QListWidget with a DirectoryBrowser widget.
         # Pass a callback that receives (directory, file_name) when a file is clicked.
-        self.directory_browser = DirectoryBrowser(file_clicked_callback=self.on_file_selected)
+        self.directory_browser = DirectoryBrowser(file_clicked_callback=self.on_file_selected, images_only=True)
         self.bottom_splitter.addWidget(self.directory_browser)
 
         # Center content (image, mask, caption)

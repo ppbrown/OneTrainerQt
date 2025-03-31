@@ -12,7 +12,7 @@ from PySide6.QtCore import Qt, QDir
 from PySide6.QtWidgets import QFileSystemModel
 
 class DirectoryBrowser(QWidget):
-    def __init__(self, file_clicked_callback, parent=None):
+    def __init__(self, file_clicked_callback, images_only=False, parent=None):
         super().__init__(parent)
         # Ensure the directory browser has a minimum width of 200 pixels.
         self.setMinimumWidth(200)
@@ -28,6 +28,11 @@ class DirectoryBrowser(QWidget):
         # ...and one for the file list (directories and files).
         self.file_model = QFileSystemModel(self)
         self.file_model.setFilter(QDir.Files | QDir.NoDotAndDotDot)
+        if images_only:
+            self.file_model.setNameFilters(["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif", "*.tiff"])
+            self.file_model.setNameFilterDisables(False)
+
+
 
         # Start at the system root so users can browse anywhere.
         initial_path = QDir.rootPath()
