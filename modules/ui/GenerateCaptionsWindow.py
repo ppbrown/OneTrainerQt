@@ -48,7 +48,7 @@ class GenerateCaptionsWindow(QMainWindow):
         # ---------------------------------------------------------------------
         self.caption_model_list = BaseImageCaptionModel.get_all_model_choices()
         self.caption_modelname_list = list(self.caption_model_list.keys())
-        self.caption_modelname = self.caption_modelname_list[0]
+        self.set_caption_model(self.caption_modelname_list[0])
 
         self.modes = ["Replace all captions", "Create if absent", "Add as new line"]
 
@@ -131,6 +131,16 @@ class GenerateCaptionsWindow(QMainWindow):
         # Modal-like behavior (if you want)
         # self.setModal(True)  # If you want a truly modal dialog
 
+
+
+    def set_caption_model(self, modelname: str):
+        if modelname not in self.caption_model_list:
+            print(f"INTERNAL ERROR: {modelname} not in caption_model_list")
+            return
+        
+        self.caption_modelname = modelname
+        self.caption_model = self.caption_model_list[modelname](default_device, torch.float16, modelname)
+
     def browse_for_path(self):
         """
         Open a directory dialog, set the result to the path_edit line.
@@ -162,11 +172,7 @@ class GenerateCaptionsWindow(QMainWindow):
         modelname = self.model_combo.currentText()
 
         if not modelname == self.caption_modelname:
-            self.caption_model = self.caption_model_list[modelname](default_device, torch.float16, modelname)
-        if self.caption_model:
-            self.captionmodelname = modelname
-        else:
-            self.current_captionmodel = None    
+            self.set_caption_model(modelname)
 
         # Convert selected mode to your internal strings
         mode_map = {
