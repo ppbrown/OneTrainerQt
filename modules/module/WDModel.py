@@ -13,7 +13,9 @@ class WDModel(BaseImageCaptionModel):
     variants = {
         "WD14_V2":        "SmilingWolf/wd-v1-4-vit-tagger-v2",
         "WD14_SWINV2_V3": "SmilingWolf/wd-swinv2-tagger-v3",
-        "WD14_EVA02_V3":  "SmilingWolf/wd-eva02-large-tagger-v3",
+        "WD14_EVA02_V3":  "SmilingWolf/wd-eva02-large-tagger-v3", # has higher probability cutoff
+        "WD14_EVA02_V3-conservative":  "SmilingWolf/wd-eva02-large-tagger-v3", 
+        "WD14_EVA02_V3-greedy":  "SmilingWolf/wd-eva02-large-tagger-v3", 
     }
 
     def __init__(self, device: torch.device, dtype: torch.dtype, versionname):
@@ -24,7 +26,12 @@ class WDModel(BaseImageCaptionModel):
         if not versionname in self.variants:
             raise ValueError("WDModel.init unrecognized versionname "+versionname)
         
-        self.prob_limit = 0.35 if "EVA02" not in  versionname else 0.5 
+        if versionname == "WD14_EVA02_V3":
+            self.prob_limit = 0.5
+        elif versionname == "WD14_EVA02_V3-conservative":
+            self.prob_limit = 0.8
+        else:
+            self.prob_limit = 0.35 
         
         hfname = self.variants[versionname]
 
@@ -61,7 +68,8 @@ class WDModel(BaseImageCaptionModel):
             initial_caption: str = "",
             caption_prefix: str = "",
             caption_postfix: str = "",
-    ):
+    ) -> str:
+         
         _, height, width, _ = self.model.get_inputs()[0].shape
 
         image = caption_sample.get_image()
@@ -76,8 +84,10 @@ class WDModel(BaseImageCaptionModel):
         probs = self.model.run([label_name], {input_name: image})[0]
         probs = probs[0].astype(float)
 
-        general_labels = [(self.tag_names[i], probs[i]) for i in self.general_indexes if probs[i] > self.prob_limit5]
-
+        general_labels = [(self.tag_names[i], probs[i]) for i in self.general_indexes if probs[i] > self.prob_limit]
+        # This shows weights
+        # # print("DEBUG WD - labels:", general_labels)
+        
         sorted_general_labels = sorted(general_labels, key=lambda label: label[1], reverse=True)
         predicted_caption = ", ".join([
             label[0].replace("_", " ")
