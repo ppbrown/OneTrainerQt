@@ -65,6 +65,7 @@ class Moondream2Model(BaseImageCaptionModel):
             logger.exception("ERROR in model.caption")
             return ""
 
+    # Called by super.caption_image()
     def generate_caption(
         self,
         caption_sample: CaptionSample,
@@ -73,6 +74,7 @@ class Moondream2Model(BaseImageCaptionModel):
         caption_prefix: str = "",
         caption_postfix: str = ""
     ) -> str:
+        #print("DEBUG: moondream.generate_caption")
         # Currently, tqdm will update to console when this is called
         logger.debug("Generating caption called")
         image = self._get_image(caption_sample)
