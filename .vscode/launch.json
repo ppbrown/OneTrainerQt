@@ -11,6 +11,13 @@
             "request": "launch",
             "program": "${workspaceFolder}/scripts/train_ui.py",
             "cwd": "${workspaceFolder}", 
+        },
+        {
+            "name": "CaptionUI",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/caption_ui.py",
+            "cwd": "${workspaceFolder}", 
         }
     ]
 }
