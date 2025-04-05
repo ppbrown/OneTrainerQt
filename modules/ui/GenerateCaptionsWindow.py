@@ -200,7 +200,7 @@ class GenerateCaptionsWindow(QMainWindow):
             include_subdirectories=self.include_sub_check.isChecked(),
         )
         """
-
+        self.stop_event.clear()
         self.worker = GenerateCaptionsWorker(
             caption_model=self.caption_model,
             sample_dir=self.path_edit.text(),
