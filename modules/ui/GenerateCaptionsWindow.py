@@ -1,8 +1,7 @@
-# generate_captions_window.py
 
 """
 Generates a pop-up window related to the CaptionsUI/data tools window,
-specific to actually generating captions for a folder of images.
+specific to generating captions for a folder of images.
 
 """
 
@@ -12,9 +11,11 @@ from PySide6.QtWidgets import (
     QPushButton, QCheckBox, QProgressBar,
     QFileDialog, QGridLayout, QVBoxLayout
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QObject, QThread, Signal, Slot
 
-# It looks like these are not used, but the imports trigger BaseImageCaptionModel
+from threading import Event
+
+# These only look unused. The imports trigger BaseImageCaptionModel
 from modules.module.WDModel import WDModel
 from modules.module.BlipModel import BlipModel
 from modules.module.Blip2Model import Blip2Model
@@ -30,7 +31,8 @@ class GenerateCaptionsWindow(QMainWindow):
     """
     Window for generating captions for a folder of images.
     """
-
+    
+    stop_event = Event()
         
     def __init__(self, parent, path, parent_include_subdirectories, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
@@ -39,6 +41,8 @@ class GenerateCaptionsWindow(QMainWindow):
         self.setWindowTitle("Batch generate captions")
         self.resize(360, 360)  # or set a fixed size if you prefer: self.setFixedSize(360, 360)
 
+
+        
         # Default path
         if path is None:
             path = ""
@@ -121,9 +125,9 @@ class GenerateCaptionsWindow(QMainWindow):
         grid.addWidget(self.progress_bar, 7, 1, 1, 2)
 
         # Create captions button
-        create_button = QPushButton("Create Captions")
-        create_button.clicked.connect(self.create_captions)
-        grid.addWidget(create_button, 8, 0, 1, 3)
+        self.create_button = QPushButton("Create Captions")
+        self.create_button.clicked.connect(self.create_captions)
+        grid.addWidget(self.create_button, 8, 0, 1, 3)
 
         # stretch to fill
         layout.addStretch(1)
@@ -131,6 +135,7 @@ class GenerateCaptionsWindow(QMainWindow):
         # Modal-like behavior (if you want)
         # self.setModal(True)  # If you want a truly modal dialog
 
+        # end of __init__
 
 
     def set_caption_model(self, modelname: str):
@@ -139,7 +144,7 @@ class GenerateCaptionsWindow(QMainWindow):
             return
         
         self.caption_modelname = modelname
-        self.caption_model = self.caption_model_list[modelname](default_device, torch.float16, modelname)
+        self.caption_model = self.caption_model_list[modelname](default_device, torch.float16, modelname, self.stop_event)
 
     def browse_for_path(self):
         """
@@ -165,12 +170,13 @@ class GenerateCaptionsWindow(QMainWindow):
         # self.progress_label.repaint()
         # QApplication.processEvents()
 
+    # This creates a caption-type specific model instance, and a separate thread to run it.
+    # Called when the "Create Captions" button is clicked.
     def create_captions(self):
-        """
-        Called when "Create Captions" button is clicked. 
-        """
+
         modelname = self.model_combo.currentText()
 
+        # Only create a new model object if the model type has changed.
         if not modelname == self.caption_modelname:
             self.set_caption_model(modelname)
 
@@ -180,8 +186,10 @@ class GenerateCaptionsWindow(QMainWindow):
             "Create if absent": "fill",
             "Add as new line": "add",
         }
-        selected_mode = mode_map.get(self.mode_combo.currentText(), "fill")
-
+        self.selected_mode = mode_map.get(self.mode_combo.currentText(), "fill")
+        
+        """
+        # Transition this bit to worker...
         self.caption_model.caption_folder(
             sample_dir=self.path_edit.text(),
             initial_caption=self.caption_entry.text(),
@@ -191,9 +199,105 @@ class GenerateCaptionsWindow(QMainWindow):
             progress_callback=self.set_progress,
             include_subdirectories=self.include_sub_check.isChecked(),
         )
+        """
 
-        # Reload the parent’s image display or do any final updates
+        self.worker = GenerateCaptionsWorker(
+            caption_model=self.caption_model,
+            sample_dir=self.path_edit.text(),
+            initial_caption=self.caption_entry.text(),
+            caption_prefix=self.prefix_entry.text(),
+            caption_postfix=self.postfix_entry.text(),
+            mode=self.selected_mode,
+            progress_callback=self.set_progress,  # callback to update the progress bar
+            include_subdirectories=self.include_sub_check.isChecked(),  # pass the checkbox state
+        )
+        self.thread = QThread()
+        self.worker.moveToThread(self.thread)
+
+        # Connect signals for cross-thread communication
+        self.thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.post_worker)
+        self.worker.progress.connect(self.set_progress)
+
+        self.thread.start()
+
+
+    # Can be called on window-close, OR future buttonpress.
+    def stop_worker(self):
+        if hasattr(self, 'thread') and self.thread.isRunning():
+            # Emit the stop signal to the worker
+            self.stop_event.set()
+            self.thread.quit()
+            self.thread.wait()
+
+    def closeEvent(self, event):
+        """
+        Handle the close event to ensure the thread is stopped if the window is closed.
+        """
+        self.stop_worker
+
+        super().closeEvent(event)
+
+
+    def post_worker(self):
+        # After captioning, reload the parent’s image display or do any final updates
         self.parent.load_image
 
-        # Optionally close the dialog automatically
-        # self.accept()  # or self.close()
+# Work in progress::
+# Have a seperate thread class to handle captioning in the background,
+# so that GUI can still update in a responsive manner.
+
+class GenerateCaptionsWorker(QObject):
+    finished = Signal()
+    progress = Signal(int, int)  # current, max
+
+    def __init__(self, 
+            caption_model,
+            sample_dir,
+            initial_caption,
+            caption_prefix,
+            caption_postfix,
+            mode,
+            progress_callback,
+            include_subdirectories
+                 ):
+        super().__init__()
+        self.caption_model = caption_model
+        self.sample_dir=sample_dir
+        self.initial_caption = initial_caption
+        self.caption_prefix = caption_prefix
+        self.caption_postfix = caption_postfix
+        self.mode = mode
+        self.progress_callback = progress_callback
+        self.include_subdirectories = include_subdirectories
+        
+    # Parent should connect() a signal to this method to trigger it.
+    # Note thiat this method also triggers a signal when finished.
+    @Slot()
+    def run(self):
+        self.caption_model.caption_folder(
+            sample_dir=self.sample_dir,
+            initial_caption=self.initial_caption,
+            caption_prefix=self.caption_prefix,
+            caption_postfix=self.caption_postfix,
+            mode=self.mode,
+            progress_callback=self.set_progress,
+            include_subdirectories=self.include_subdirectories
+        )
+        # Need to make caption_model check for "stop now" signal?
+        # or.. nah, just kill this thread?
+        
+        self.finished.emit()
+
+    # Parent should connect() a signal to this method.
+    # Then we set the internal value to indicate stop.
+    # This should make the run() thread stop its work early.
+    # It should then emit the finished signal in the same way it usually does.
+    @Slot()
+    def stop(self):
+        self.stop_reference[0] = True
+
+    def set_progress(self, i, max_val):
+        self.progress.emit(i, max_val)
+

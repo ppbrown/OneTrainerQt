@@ -15,7 +15,8 @@ class Moondream2Model(BaseImageCaptionModel):
         self,
         device: torch.device,
         dtype: torch.dtype,
-        versionname="Moondream2",
+        versionname,
+        stop_event,
         model_revision: str = "05d640e6da70c37b2473e0db8fef0233c0709ce4", #DO NOT CHANGE. Commit hash has been reviewed.
         caption_length: str = None,
         stream: bool = False,
@@ -31,8 +32,7 @@ class Moondream2Model(BaseImageCaptionModel):
             caption_length (str): "short" or "normal" caption length
             stream (bool): Whether to stream output (only relevant for interactive use)
         """
-        self.device = device
-        self.dtype = dtype
+        super().__init__(device,dtype,versionname,stop_event)
         
         if caption_length: 
             self.caption_length = caption_length
