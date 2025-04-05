@@ -6,9 +6,8 @@ from transformers import AutoProcessor, Blip2ForConditionalGeneration
 
 
 class Blip2Model(BaseImageCaptionModel):
-    def __init__(self, device: torch.device, dtype: torch.dtype, versionname=None):
-        self.device = device
-        self.dtype = dtype
+    def __init__(self, device: torch.device, dtype: torch.dtype, versionname,stop_event):
+        super().__init__(device,dtype,versionname, stop_event)
 
         self.processor = AutoProcessor.from_pretrained("Salesforce/blip2-opt-2.7b")
 

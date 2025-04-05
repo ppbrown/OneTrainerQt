@@ -18,14 +18,12 @@ class WDModel(BaseImageCaptionModel):
         "WD14_EVA02_V3-greedy":  "SmilingWolf/wd-eva02-large-tagger-v3", 
     }
 
-    def __init__(self, device: torch.device, dtype: torch.dtype, versionname):
-        self.device = device
-        self.dtype = dtype
-        self.versionname = versionname
-
+    def __init__(self, device: torch.device, dtype: torch.dtype, versionname, stop_event):
         if not versionname in self.variants:
             raise ValueError("WDModel.init unrecognized versionname "+versionname)
         
+        super().__init__(device,dtype,versionname,stop_event)
+
         if versionname == "WD14_EVA02_V3":
             self.prob_limit = 0.5
         elif versionname == "WD14_EVA02_V3-conservative":

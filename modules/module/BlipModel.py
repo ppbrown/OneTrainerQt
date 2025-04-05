@@ -6,10 +6,8 @@ from transformers import BlipForConditionalGeneration, BlipProcessor
 
 
 class BlipModel(BaseImageCaptionModel):
-    def __init__(self, device: torch.device, dtype: torch.dtype, versionname=None):
-        self.device = device
-        self.dtype = dtype
-
+    def __init__(self, device: torch.device, dtype: torch.dtype, versionname, stop_event):
+        super().__init__(device,dtype,versionname,stop_event)
         self.processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-large")
 
         self.model = BlipForConditionalGeneration.from_pretrained(

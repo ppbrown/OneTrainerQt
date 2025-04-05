@@ -26,6 +26,7 @@ from PIL import Image
 from tqdm import tqdm
 
 from typing import Type, Dict
+from threading import Event
 
 
 class CaptionSample:
@@ -71,12 +72,18 @@ class CaptionSample:
 
 class BaseImageCaptionModel(metaclass=ABCMeta):
 
-    @abstractmethod
-    def __init__(self, device, dprecision, versionname=None):
+    # If child class overrides, it MUST call us with
+    #   super().__init__(device,dtype,versionname, stop_event)
+    # If child class only has one version, it may choose to ignore whatever is set for versionname
+    def __init__(self, device, dprecision, versionname: str, stop_event: Event):
         """
             If class suppports multiple versions, then versionname is expected to be 
-            one of the outputs from get_version_names()
+            one of the outputs from that class's static get_version_names() function.
         """
+        self.device = device
+        self.dprecision = dprecision
+        self.stop_event = stop_event
+        self.versionname = versionname
 
     @staticmethod
     def __get_sample_filenames(sample_dir: str, include_subdirectories: bool = False) -> list[str]:
@@ -206,6 +213,10 @@ class BaseImageCaptionModel(metaclass=ABCMeta):
             except Exception:
                 if error_callback is not None:
                     error_callback(filename)
+            if self.stop_event.is_set():
+                # Allow for an external stop request to cancel processing
+                print("DEBUG: Stopping captioning as requested")
+                break
             if progress_callback is not None:
                 progress_callback(i + 1, len(filenames))
 
@@ -218,7 +229,7 @@ class BaseImageCaptionModel(metaclass=ABCMeta):
             mode: str = 'fill',
             progress_callback: Callable[[int, int], None] = None,
             error_callback: Callable[[str], None] = None,
-            include_subdirectories: bool = False,
+            include_subdirectories: bool = False
     ):
         """
         Captions all samples in a folder
