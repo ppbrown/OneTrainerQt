@@ -1,7 +1,12 @@
 """
 Generates a pop-up window related to the CaptionsUI/data tools window,
 specific to generating captions for a folder of images.
+Note: we use Signal() passing in some places instead of direct calls,
+for Thread-safety with the LongTaskButton worker thread.
+
 """
+
+
 
 import os
 import threading
@@ -40,7 +45,7 @@ class GenerateCaptionsWindow(QMainWindow):
         self.resize(360, 360)
 
         self.progress_signal.connect(self.set_progress)
-        
+
         # Default path.
         if path is None:
             path = ""
