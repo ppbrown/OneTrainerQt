@@ -35,6 +35,8 @@ class GenerateCaptionsWindow(QMainWindow):
     Window for generating captions for a folder of images.
     """
     # Signal for progress updates (current, max)
+    # This gets triggered through a lambda function wrapper, in a different thread
+    # The signal will then trigger the `set_progress` method in the main thread.
     progress_signal = Signal(int, int)
     
     def __init__(self, parent, path, parent_include_subdirectories, *args, **kwargs):
