@@ -22,34 +22,36 @@ class LongTaskButton(QPushButton):
         self._text_running = text_running
         self._callback = callback
         self._thread = None
-        self._stop_event = None
+        self.stop_event = threading.Event()
 
         self.clicked.connect(self._handle_click)
 
     def _handle_click(self):
         if self._thread is None or not self._thread.isRunning():
             # Create an event to signal early termination.
-            self._stop_event = threading.Event()
+            self.stop_event.clear()
  
-            self._thread = TaskThread(self._callback, self._stop_event)
+            self._thread = TaskThread(self._callback, self.stop_event)
             self._thread.finished.connect(self._task_finished)
             self.setText(self._text_running)
             self._thread.start()
         else:
-            if self._stop_event:
-                self._stop_event.set()
+            if self.stop_event:
+                self.stop_event.set()
 
     def _task_finished(self):
         self.setText(self._text_normal)
         self._thread = None
-        self._stop_event = None
+        self.stop_event.clear()
+
+    def stop_task(self):
+        self.stop_event.set()
+        if self._thread and self._thread.isRunning():
+            self._thread.wait()
 
     # If the Button's window is deleted while the thread is still running, ensure it stops gracefully.
     def __del__(self):
-        if self._stop_event and not self._stop_event.is_set():
-            self._stop_event.set()
-        if self._thread and self._thread.isRunning():
-            self._thread.wait()
+        self.stop_task()
 
 # QThread subclass that runs the callback function for LongTaskButton.
 class TaskThread(QThread):
