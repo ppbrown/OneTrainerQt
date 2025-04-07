@@ -6,7 +6,7 @@ If the button is pressed during a run, it will signal the task to stop early.
 """
 import threading
 from PySide6.QtWidgets import QPushButton
-from PySide6.QtCore import QThread
+from PySide6.QtCore import QThread, Qt
 
 
 class LongTaskButton(QPushButton):
@@ -28,7 +28,8 @@ class LongTaskButton(QPushButton):
 
     def _handle_click(self):
         if self._thread is None or not self._thread.isRunning():
-            # Create an event to signal early termination.
+            self.setCursor(Qt.WaitCursor)
+
             self.stop_event.clear()
  
             self._thread = TaskThread(self._callback, self.stop_event)
@@ -40,6 +41,7 @@ class LongTaskButton(QPushButton):
                 self.stop_event.set()
 
     def _task_finished(self):
+        self.unsetCursor()
         self.setText(self._text_normal)
         self._thread = None
         self.stop_event.clear()
