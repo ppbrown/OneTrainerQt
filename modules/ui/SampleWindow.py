@@ -72,9 +72,6 @@ class SampleWindow(QDialog):
             self.model = None
             self.model_sampler = None
 
-        # Our sample config + UI state
-        self.sample = SampleConfig.default_values()
-        self.ui_state = UIState(self, self.sample)
 
         self.setWindowTitle("Sample")
         self.resize(1200, 800)
