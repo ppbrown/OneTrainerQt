@@ -25,8 +25,7 @@ class BaseRembgModel(BaseImageMaskModel):
         self.model_filename = model_filename
         self.model_path = model_path
         self.model_md5 = model_md5
-        self.device = device
-        self.dtype = dtype
+        super().__init__(device, dtype)
 
         self.model = self.__load_model()
 

@@ -4,12 +4,11 @@ from modules.module.BaseImageMaskModel import BaseImageMaskModel, MaskSample
 import torch
 from torch import Tensor, nn
 from torchvision.transforms import functional, transforms
-
+from threading import Event
 
 class MaskByColor(BaseImageMaskModel):
     def __init__(self, device: torch.device, dtype: torch.dtype):
-        self.device = device
-        self.dtype = dtype
+        super().__init__(device, dtype)
 
         self.smoothing_kernel_radius = None
         self.smoothing_kernel = self.__create_average_kernel(self.smoothing_kernel_radius)

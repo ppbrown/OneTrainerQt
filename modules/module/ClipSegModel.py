@@ -10,8 +10,7 @@ from transformers import CLIPSegForImageSegmentation, CLIPSegProcessor
 
 class ClipSegModel(BaseImageMaskModel):
     def __init__(self, device: torch.device, dtype: torch.dtype):
-        self.device = device
-        self.dtype = dtype
+        super().__init__(device, dtype)
 
         self.processor = CLIPSegProcessor.from_pretrained("CIDAS/clipseg-rd64-refined")
 

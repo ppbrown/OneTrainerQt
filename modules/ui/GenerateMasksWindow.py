@@ -8,19 +8,23 @@ from PySide6.QtWidgets import (
     QDialog, QLabel, QLineEdit, QComboBox, QCheckBox, QProgressBar,
     QPushButton, QFileDialog, QGridLayout, QVBoxLayout
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
+# Use the same LongTaskButton as in the captions window.
+from modules.util.ui.LongTaskButton import LongTaskButton
 
 class GenerateMasksWindow(QDialog):
     """
     Window for generating masks for a folder of images.
     """
+    # Signal for progress updates (current, max)
+    progress_signal = Signal(int, int)
 
     def __init__(self, parent, path, parent_include_subdirectories, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
 
-        self.parent = parent  # reference to the parent object/window
+        self.parent = parent  # Reference to the parent object/window.
         self.setWindowTitle("Batch generate masks")
-        self.resize(360, 430)  # Or set a fixed size if needed
+        self.resize(360, 430)
 
         # Default path
         if path is None:
@@ -38,20 +42,18 @@ class GenerateMasksWindow(QDialog):
         # ---------------------------------------------------------------------
         layout = QVBoxLayout()
         self.setLayout(layout)
-
-        # We'll use a QGridLayout inside the main layout
         grid = QGridLayout()
         layout.addLayout(grid)
 
-        # Model label + combo
+        # Model label and combo box
         model_label = QLabel("Model:")
         self.model_combo = QComboBox()
         self.model_combo.addItems(self.models)
-        self.model_combo.setCurrentIndex(self.models.index("ClipSeg"))  # default to ClipSeg
+        self.model_combo.setCurrentIndex(self.models.index("ClipSeg"))
         grid.addWidget(model_label, 0, 0)
         grid.addWidget(self.model_combo, 0, 1)
 
-        # Path label + line + browse button
+        # Path label, line edit, and browse button
         path_label = QLabel("Folder:")
         self.path_edit = QLineEdit(path)
         path_button = QPushButton("...")
@@ -67,7 +69,7 @@ class GenerateMasksWindow(QDialog):
         grid.addWidget(prompt_label, 2, 0)
         grid.addWidget(self.prompt_edit, 2, 1, 1, 2)
 
-        # Mode label + combo
+        # Mode label and combo box
         mode_label = QLabel("Mode:")
         self.mode_combo = QComboBox()
         self.mode_combo.addItems(self.modes)
@@ -120,19 +122,21 @@ class GenerateMasksWindow(QDialog):
         grid.addWidget(self.progress_label, 9, 0)
         grid.addWidget(self.progress_bar, 9, 1, 1, 2)
 
-        # Create masks button
-        create_button = QPushButton("Create Masks")
-        create_button.clicked.connect(self.create_masks)
-        grid.addWidget(create_button, 10, 0, 1, 3)
+        # Create masks button: use LongTaskButton for threading.
+        self.create_button = LongTaskButton(
+            "Create Masks",
+            "Task Running - Click to Cancel",
+            self.create_masks  # Callback accepts a stop_event argument.
+        )
+        grid.addWidget(self.create_button, 10, 0, 1, 3)
 
         layout.addStretch(1)
 
-        # You can set this QDialog to modal if you want:
-        # self.setModal(True)
+        self.progress_signal.connect(self.set_progress)
 
     def browse_for_path(self):
         """
-        Open a directory dialog, update the path_edit field.
+        Open a directory dialog and update the path_edit field.
         """
         chosen_dir = QFileDialog.getExistingDirectory(self, "Select Directory", self.path_edit.text())
         if chosen_dir:
@@ -142,21 +146,15 @@ class GenerateMasksWindow(QDialog):
         """
         Update progress bar and label.
         """
-        if max_value == 0:
-            percentage = 0
-        else:
-            percentage = int((value / max_value) * 100)
-
+        percentage = int((value / max_value) * 100) if max_value else 0
         self.progress_bar.setValue(percentage)
         self.progress_label.setText(f"Progress: {value}/{max_value}")
 
-    def create_masks(self):
+    def create_masks(self, stop_event):
         """
-        Called when the "Create Masks" button is pressed.
+        Callback for create_button.
+        Gathers UI values, resets the stop_event, and runs the mask generation process.
         """
-        if not self.parent:
-            return  # or raise an exception, depends on how your parent is structured
-
         # Ask parent to load the chosen model
         model_name = self.model_combo.currentText()
         self.parent.load_masking_model(model_name)
@@ -177,7 +175,8 @@ class GenerateMasksWindow(QDialog):
         smooth_pixels = int(self.smooth_edit.text() or "5")
         expand_pixels = int(self.expand_edit.text() or "10")
 
-        # Call the parent's masking model
+        # Call the parent's masking model in the worker thread,
+        # using a lambda func to emit progress updates.
         self.parent.masking_model.mask_folder(
             sample_dir=self.path_edit.text(),
             prompts=[self.prompt_edit.text()],
@@ -186,10 +185,24 @@ class GenerateMasksWindow(QDialog):
             threshold=threshold,
             smooth_pixels=smooth_pixels,
             expand_pixels=expand_pixels,
-            progress_callback=self.set_progress,
+            progress_callback=lambda i, m: self.progress_signal.emit(i, m),
             include_subdirectories=self.include_sub_check.isChecked(),
+            stop_event=stop_event  # If the masking model supports stopping via an event.
         )
-        # Possibly refresh parent's image
-        self.parent.load_image()
-        # Close the dialog if desired
-        # self.accept()
+
+        self.post_worker()
+
+    def post_worker(self):
+        """
+        Final updates after mask generation (for example, refreshing the parent's image).
+        """
+        if hasattr(self.parent, 'load_image'):
+            self.parent.load_image()
+
+    def closeEvent(self, event):
+        """
+        Ensure that any running task is signaled to stop when the window is closed.
+        """
+        if self.create_button:
+            self.create_button.stop_task()
+        super().closeEvent(event)

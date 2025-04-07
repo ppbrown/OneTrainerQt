@@ -11,6 +11,8 @@ from torchvision.transforms import transforms
 
 from PIL import Image
 from tqdm import tqdm
+from threading import Event
+
 
 
 class MaskSample:
@@ -115,6 +117,12 @@ class MaskSample:
 
 
 class BaseImageMaskModel(metaclass=ABCMeta):
+    # If child class overrides, it is expected to call us to set up the instance vars,
+    # or do it itself in its own __init__ method.
+    def __init__(self, device, dtype):
+        self.device = device
+        self.dtype = dtype
+
     @staticmethod
     def __get_sample_filenames(sample_dir: str, include_subdirectories: bool = False) -> list[str]:
         sample_dir = Path(sample_dir)
@@ -166,6 +174,7 @@ class BaseImageMaskModel(metaclass=ABCMeta):
             expand_pixels: int = 10,
             progress_callback: Callable[[int, int], None] = None,
             error_callback: Callable[[str], None] = None,
+            stop_event: Event = None
     ):
         """
         Masks all samples in a list
@@ -195,6 +204,10 @@ class BaseImageMaskModel(metaclass=ABCMeta):
             except Exception:
                 if error_callback is not None:
                     error_callback(filename)
+            if stop_event.is_set():
+                # Allow for an external stop request to cancel processing
+                print("DEBUG: Stopping captioning as requested")
+                break
             if progress_callback is not None:
                 progress_callback(i + 1, len(filenames))
 
@@ -210,6 +223,7 @@ class BaseImageMaskModel(metaclass=ABCMeta):
             progress_callback: Callable[[int, int], None] = None,
             error_callback: Callable[[str], None] = None,
             include_subdirectories: bool = False,
+            stop_event: Event = None
     ):
         """
         Masks all samples in a folder
@@ -243,4 +257,5 @@ class BaseImageMaskModel(metaclass=ABCMeta):
             expand_pixels=expand_pixels,
             progress_callback=progress_callback,
             error_callback=error_callback,
+            stop_event=stop_event
         )
