@@ -582,6 +582,155 @@ class ConceptWindow(QDialog):
         data = pil_image.tobytes("raw", "RGB")
         qimg = QImage(data, pil_image.width, pil_image.height, 3*pil_image.width, QImage.Format_RGB888)
         return QPixmap.fromImage(qimg)
+    
+    def __update_concept_stats(self):
+        #file size
+        self.file_size_preview.configure(text=str(int(self.concept.concept_stats["file_size"]/1048576)) + " MB")
+        self.processing_time.configure(text=str(round(self.concept.concept_stats["processing_time"], 2)) + " s")
+
+        #directory count
+        self.dir_count_preview.configure(text=self.concept.concept_stats["directory_count"])
+
+        #image count
+        self.image_count_preview.configure(text=self.concept.concept_stats["image_count"])
+        self.image_count_mask_preview.configure(text=self.concept.concept_stats["image_with_mask_count"])
+        self.image_count_caption_preview.configure(text=self.concept.concept_stats["image_with_caption_count"])
+
+        #video count
+        self.video_count_preview.configure(text=self.concept.concept_stats["video_count"])
+        #self.video_count_mask_preview.configure(text=self.concept.concept_stats["video_with_mask_count"])
+        self.video_count_caption_preview.configure(text=self.concept.concept_stats["video_with_caption_count"])
+
+        #mask count
+        self.mask_count_preview.configure(text=self.concept.concept_stats["mask_count"])
+        self.mask_count_preview_unpaired.configure(text=self.concept.concept_stats["unpaired_masks"])
+
+        #caption count
+        self.caption_count_preview.configure(text=self.concept.concept_stats["caption_count"])
+        self.caption_count_preview_unpaired.configure(text=self.concept.concept_stats["unpaired_captions"])
+
+        #resolution info
+        max_pixels = self.concept.concept_stats["max_pixels"]
+        avg_pixels = self.concept.concept_stats["avg_pixels"]
+        min_pixels = self.concept.concept_stats["min_pixels"]
+
+        if any(isinstance(x, str) for x in [max_pixels, avg_pixels, min_pixels]) or self.concept.concept_stats["image_count"] == 0:   #will be str if adv stats were not taken
+            self.pixel_max_preview.configure(text="-")
+            self.pixel_avg_preview.configure(text="-")
+            self.pixel_min_preview.configure(text="-")
+        else:
+            #formatted as (#pixels/1000000) MP, width x height, \n filename
+            self.pixel_max_preview.configure(text=f'{str(round(max_pixels[0]/1000000, 2))} MP, {max_pixels[2]}\n{max_pixels[1]}')
+            self.pixel_avg_preview.configure(text=f'{str(round(avg_pixels/1000000, 2))} MP, ~{int(math.sqrt(avg_pixels))}w x {int(math.sqrt(avg_pixels))}h')
+            self.pixel_min_preview.configure(text=f'{str(round(min_pixels[0]/1000000, 2))} MP, {min_pixels[2]}\n{min_pixels[1]}')
+
+        #video length and fps info
+        max_length = self.concept.concept_stats["max_length"]
+        avg_length = self.concept.concept_stats["avg_length"]
+        min_length = self.concept.concept_stats["min_length"]
+        max_fps = self.concept.concept_stats["max_fps"]
+        avg_fps = self.concept.concept_stats["avg_fps"]
+        min_fps = self.concept.concept_stats["min_fps"]
+
+        if any(isinstance(x, str) for x in [max_length, avg_length, min_length]) or self.concept.concept_stats["video_count"] == 0:   #will be str if adv stats were not taken
+            self.length_max_preview.configure(text="-")
+            self.length_avg_preview.configure(text="-")
+            self.length_min_preview.configure(text="-")
+            self.fps_max_preview.configure(text="-")
+            self.fps_avg_preview.configure(text="-")
+            self.fps_min_preview.configure(text="-")
+        else:
+            #formatted as (#frames) frames \n filename
+            self.length_max_preview.configure(text=f'{int(max_length[0])} frames\n{max_length[1]}')
+            self.length_avg_preview.configure(text=f'{int(avg_length)} frames')
+            self.length_min_preview.configure(text=f'{int(min_length[0])} frames\n{min_length[1]}')
+            #formatted as (#fps) fps \n filename
+            self.fps_max_preview.configure(text=f'{int(max_fps[0])} fps\n{max_fps[1]}')
+            self.fps_avg_preview.configure(text=f'{int(avg_fps)} fps')
+            self.fps_min_preview.configure(text=f'{int(min_fps[0])} fps\n{min_fps[1]}')
+
+        #caption info
+        max_caption_length = self.concept.concept_stats["max_caption_length"]
+        avg_caption_length = self.concept.concept_stats["avg_caption_length"]
+        min_caption_length = self.concept.concept_stats["min_caption_length"]
+
+        if any(isinstance(x, str) for x in [max_caption_length, avg_caption_length, min_caption_length]) or self.concept.concept_stats["caption_count"] == 0:   #will be str if adv stats were not taken
+            self.caption_max_preview.configure(text="-")
+            self.caption_avg_preview.configure(text="-")
+            self.caption_min_preview.configure(text="-")
+        else:
+            #formatted as (#chars) chars, (#words) words, \n filename
+            self.caption_max_preview.configure(text=f'{max_caption_length[0]} chars, {max_caption_length[2]} words\n{max_caption_length[1]}')
+            self.caption_avg_preview.configure(text=f'{int(avg_caption_length[0])} chars, {int(avg_caption_length[1])} words')
+            self.caption_min_preview.configure(text=f'{min_caption_length[0]} chars, {min_caption_length[2]} words\n{min_caption_length[1]}')
+
+        #aspect bucketing
+        aspect_buckets = self.concept.concept_stats["aspect_buckets"]
+        if len(aspect_buckets) != 0 and max(val for val in aspect_buckets.values()) > 0:    #check aspect_bucket data exists and is not all zero
+            min_val = min(val for val in aspect_buckets.values() if val > 0)                #smallest nonzero values
+            if max(val for val in aspect_buckets.values()) > min_val:                       #check if any buckets larger than min_val exist - if all images are same aspect then there won't be
+                min_val2 = min(val for val in aspect_buckets.values() if (val > 0 and val != min_val))  #second smallest bucket
+            else:
+                min_val2 = min_val  #if no second smallest bucket exists set to min_val
+            min_aspect_buckets = {key: val for key,val in aspect_buckets.items() if val in (min_val, min_val2)}
+            min_bucket_str = ""
+            for key, val in min_aspect_buckets.items():
+                min_bucket_str += f'aspect {key}: {val} img\n'
+            min_bucket_str.strip()
+            self.small_bucket_preview.configure(text=min_bucket_str)
+
+        self.bucket_ax.cla()
+        aspects = [str(x) for x in list(aspect_buckets.keys())]
+        counts = list(aspect_buckets.values())
+        b = self.bucket_ax.bar(aspects, counts)
+        self.bucket_ax.bar_label(b, color=self.text_color)
+        self.canvas.draw()
+
+    def __get_concept_stats(self, advanced_checks: bool, waittime: float):
+        start_time = time.perf_counter()
+        last_update = time.perf_counter()
+        subfolders = [self.concept.path]
+        stats_dict = concept_stats.init_concept_stats(self.concept, advanced_checks)
+        for path in subfolders:
+            stats_dict = concept_stats.folder_scan(path, stats_dict, advanced_checks, self.concept)
+            stats_dict["processing_time"] = time.perf_counter() - start_time
+            if self.concept.include_subdirectories:     #add all subfolders of current directory to for loop
+                subfolders.extend([f for f in os.scandir(path) if f.is_dir()])
+            self.concept.concept_stats = stats_dict
+            #cancel and set init stats if longer than waiting time or cancel flag set
+            if (time.perf_counter() - start_time) > waittime or self.cancel_scan_flag.is_set():
+                stats_dict = concept_stats.init_concept_stats(self.concept, advanced_checks)
+                stats_dict["processing_time"] = time.perf_counter() - start_time
+                self.concept.concept_stats = stats_dict
+                self.cancel_scan_flag.clear()
+                break
+            #update GUI approx every half second
+            if time.perf_counter() > (last_update + 0.5):
+                last_update = time.perf_counter()
+                self.__update_concept_stats()
+                self.concept_stats_tab.update()
+
+        self.__update_concept_stats()
+
+    def __get_concept_stats_threaded(self, advanced_checks : bool, waittime : float):
+        self.p = multiprocessing.Process(target=self.__get_concept_stats(advanced_checks, waittime), daemon=True)
+        self.p.start()
+
+    def __cancel_concept_stats(self):
+        self.cancel_scan_flag.set()
+
+    def __auto_update_concept_stats(self):
+        try:
+            self.__update_concept_stats()      #load stats from config if available, else raises KeyError
+            if self.concept.concept_stats["image_count"] == 0:  #force rescan if zero images
+                raise KeyError
+        except KeyError:
+            try:
+                self.__get_concept_stats_threaded(False, 2)    #force rescan if config is empty, timeout of 2 sec
+                if self.concept.concept_stats["processing_time"] < 0.1:
+                    self.__get_concept_stats_threaded(True, 2)    #do advanced scan automatically if basic took <0.1s
+            except FileNotFoundError:              #avoid error when loading concept window without config path defined
+                pass
 
     def __ok(self):
         # self.concept.configure_element()
