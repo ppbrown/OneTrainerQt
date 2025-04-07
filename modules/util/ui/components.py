@@ -136,7 +136,7 @@ def entry(
     """
     var = ui_state.get_var(var_name)
     line_edit = QLineEdit(master)
-    line_edit.setText(var.get())
+    line_edit.setText(str(var.get()))
     if width > 0:
         line_edit.setFixedWidth(width)
 
