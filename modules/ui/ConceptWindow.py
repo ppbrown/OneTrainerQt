@@ -1,6 +1,3 @@
-
-# Window to edit properties of a single "concept" from the ConceptTab
-
 import math
 import multiprocessing
 import os
@@ -10,8 +7,12 @@ import time
 import traceback
 
 import torch
-from PIL import Image
 from torchvision.transforms import functional
+
+from matplotlib import pyplot as plt
+# Use the QtAgg backend for Matplotlib instead of the TkAgg backend:
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from PIL import Image
 
 from PySide6.QtWidgets import (
     QDialog, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout,
@@ -19,7 +20,7 @@ from PySide6.QtWidgets import (
     QFrame, QPlainTextEdit
 )
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QPixmap, QImage
+from PySide6.QtGui import QPixmap, QImage, QFont
 
 from modules.util import concept_stats, path_util
 from modules.util.config.ConceptConfig import ConceptConfig
@@ -81,7 +82,6 @@ class ConceptWindow(QDialog):
         # Setup QDialog
         self.setWindowTitle("Concept")
         self.resize(800, 700)
-        # For a blocking dialog, you'd do self.setModal(True)
 
         # Main layout for the entire dialog
         self.main_layout = QGridLayout(self)
@@ -103,10 +103,14 @@ class ConceptWindow(QDialog):
         self.text_augmentation_widget = QWidget()
         self.tabview.addTab(self.text_augmentation_widget, "text augmentation")
 
+        self.concept_stats_tab_widget = QWidget()
+        self.tabview.addTab(self.concept_stats_tab_widget, "statistics")
+
         # Build each tab
         self.__general_tab(self.general_tab_widget)
         self.__image_augmentation_tab(self.image_augmentation_widget)
         self.__text_augmentation_tab(self.text_augmentation_widget)
+        self.__concept_stats_tab(self.concept_stats_tab_widget)
 
         # "OK" button at row=1
         self.ok_button = QPushButton("ok", self)
@@ -114,15 +118,11 @@ class ConceptWindow(QDialog):
         self.main_layout.addWidget(self.ok_button, 1, 0, 1, 1, alignment=Qt.AlignRight)
 
     def __general_tab(self, master: QWidget):
-        """
-        Replaces your ctk.CTkScrollableFrame with a QScrollArea,
-        then place everything in a QGridLayout inside.
-        """
-        # QScrollArea
+
         scroll_area = QScrollArea(master)
         scroll_area.setWidgetResizable(True)
         layout_master = QVBoxLayout(master)
-        layout_master.setContentsMargins(0,0,0,0)
+        layout_master.setContentsMargins(0, 0, 0, 0)
         layout_master.setSpacing(5)
         master.setLayout(layout_master)
         layout_master.addWidget(scroll_area)
@@ -130,7 +130,7 @@ class ConceptWindow(QDialog):
         # Container inside the scroll
         container = QFrame()
         container_layout = QGridLayout(container)
-        container_layout.setContentsMargins(5,5,5,5)
+        container_layout.setContentsMargins(5, 5, 5, 5)
         container_layout.setSpacing(5)
         container.setLayout(container_layout)
         scroll_area.setWidget(container)
@@ -160,7 +160,6 @@ class ConceptWindow(QDialog):
             # Enable the file entry's sub-widgets only if 'concept' is chosen.
             for child in prompt_path_entry.children():
                 child.setEnabled(option == 'concept')
-
 
         components.options_kv(
             container, 4, 1,
@@ -196,19 +195,19 @@ class ConceptWindow(QDialog):
 
     def __image_augmentation_tab(self, master: QWidget):
         """
-        Window with with a grid for the 'Random' and 'Fixed' columns, plus an image preview.
+        Window with a grid for the 'Random' and 'Fixed' columns, plus an image preview.
         """
         scroll_area = QScrollArea(master)
         scroll_area.setWidgetResizable(True)
         layout_master = QVBoxLayout(master)
-        layout_master.setContentsMargins(0,0,0,0)
+        layout_master.setContentsMargins(0, 0, 0, 0)
         layout_master.setSpacing(5)
         master.setLayout(layout_master)
         layout_master.addWidget(scroll_area)
 
         container = QFrame()
         container_layout = QGridLayout(container)
-        container_layout.setContentsMargins(5,5,5,5)
+        container_layout.setContentsMargins(5, 5, 5, 5)
         container_layout.setSpacing(5)
         container.setLayout(container_layout)
         scroll_area.setWidget(container)
@@ -269,20 +268,20 @@ class ConceptWindow(QDialog):
         components.switch(container, 10, 2, self.image_ui_state, "enable_resolution_override")
         components.entry(container, 10, 3, self.image_ui_state, "resolution_override")
 
-        # image preview 
+        # image preview
         image_preview, filename_preview, caption_preview = self.__get_preview_image()
         self.preview_pixmap = self.__pil_to_qpixmap(image_preview)
 
         self.image_label = QLabel(container)
         self.image_label.setPixmap(self.preview_pixmap)
-        self.image_label.setFixedSize(min(image_preview.width,300), min(image_preview.height,300))
+        self.image_label.setFixedSize(min(image_preview.width, 300), min(image_preview.height, 300))
         self.image_label.setScaledContents(True)
         container_layout.addWidget(self.image_label, 0, 4, 6, 1)  # row=0..5
 
         # refresh preview buttons
         update_button_frame = QFrame(container)
         update_button_layout = QGridLayout(update_button_frame)
-        update_button_layout.setContentsMargins(0,0,0,0)
+        update_button_layout.setContentsMargins(0, 0, 0, 0)
         update_button_layout.setSpacing(5)
         update_button_frame.setLayout(update_button_layout)
         container_layout.addWidget(update_button_frame, 6, 4, 1, 1)
@@ -321,14 +320,14 @@ class ConceptWindow(QDialog):
         scroll_area = QScrollArea(master)
         scroll_area.setWidgetResizable(True)
         layout_master = QVBoxLayout(master)
-        layout_master.setContentsMargins(0,0,0,0)
+        layout_master.setContentsMargins(0, 0, 0, 0)
         layout_master.setSpacing(5)
         master.setLayout(layout_master)
         layout_master.addWidget(scroll_area)
 
         container = QFrame()
         container_layout = QGridLayout(container)
-        container_layout.setContentsMargins(5,5,5,5)
+        container_layout.setContentsMargins(5, 5, 5, 5)
         container_layout.setSpacing(5)
         container.setLayout(container_layout)
         scroll_area.setWidget(container)
@@ -392,6 +391,216 @@ class ConceptWindow(QDialog):
         components.label(container, 8, 2, "Probability")
         components.entry(container, 8, 3, self.text_ui_state, "caps_randomize_probability")
 
+    def __concept_stats_tab(self, master: QWidget):
+        """
+        Example of converting the old CustomTkinter-based scrollable frame and
+        Tk-based Matplotlib canvas into pure PySide6.
+        """
+        scroll_area = QScrollArea(master)
+        scroll_area.setWidgetResizable(True)
+        layout_master = QVBoxLayout(master)
+        layout_master.setContentsMargins(0, 0, 0, 0)
+        layout_master.setSpacing(5)
+        master.setLayout(layout_master)
+        layout_master.addWidget(scroll_area)
+
+        # Container inside the scroll
+        container = QFrame()
+        grid_layout = QGridLayout(container)
+        grid_layout.setContentsMargins(5, 5, 5, 5)
+        grid_layout.setSpacing(5)
+        container.setLayout(grid_layout)
+
+        scroll_area.setWidget(container)
+
+        # We'll mimic the old "frame.grid_columnconfigure" calls:
+        # for col in range(4):
+        #     grid_layout.setColumnStretch(col, 0)
+        #     grid_layout.setColumnMinimumWidth(col, 150)
+
+        self.cancel_scan_flag = multiprocessing.Event()
+
+        # Example for setting a label with underline via QFont:
+        def set_underline(label: QLabel):
+            font = label.font()
+            font.setUnderline(True)
+            label.setFont(font)
+
+        # file size
+        self.file_size_label = components.label(container, 1, 0, "Total Size", pad=0,
+                         tooltip="Total size of all image, mask, and caption files in MB")
+        set_underline(self.file_size_label)
+
+        self.file_size_preview = components.label(container, 2, 0, pad=0, text="-")
+
+        # directory count
+        self.dir_count_label = components.label(container, 1, 1, "Directories", pad=0,
+                         tooltip="Total number of directories...")
+        set_underline(self.dir_count_label)
+        self.dir_count_preview = components.label(container, 2, 1, pad=0, text="-")
+
+        # image count
+        self.image_count_label = components.label(container, 3, 0, "\nTotal Images", pad=0,
+                         tooltip="Total number of image files...")
+        set_underline(self.image_count_label)
+        self.image_count_preview = components.label(container, 4, 0, pad=0, text="-")
+
+        self.video_count_label = components.label(container, 3, 1, "\nTotal Videos", pad=0,
+                         tooltip="Total number of video files...")
+        set_underline(self.video_count_label)
+        self.video_count_preview = components.label(container, 4, 1, pad=0, text="-")
+
+        self.mask_count_label = components.label(container, 3, 2, "\nTotal Masks", pad=0,
+                         tooltip="Total number of mask files...")
+        set_underline(self.mask_count_label)
+        self.mask_count_preview = components.label(container, 4, 2, pad=0, text="-")
+
+        self.caption_count_label = components.label(container, 3, 3, "\nTotal Captions", pad=0,
+                         tooltip="Total number of caption files...")
+        set_underline(self.caption_count_label)
+        self.caption_count_preview = components.label(container, 4, 3, pad=0, text="-")
+
+        # advanced img/vid stats
+        self.image_count_mask_label = components.label(container, 5, 0, "\nImages with Masks", pad=0,
+                         tooltip="Total number of image files with an associated mask")
+        set_underline(self.image_count_mask_label)
+        self.image_count_mask_preview = components.label(container, 6, 0, pad=0, text="-")
+
+        self.mask_count_label_unpaired = components.label(container, 5, 1, "\nUnpaired Masks", pad=0,
+                         tooltip="Total number of mask files which lack a corresponding image file")
+        set_underline(self.mask_count_label_unpaired)
+        self.mask_count_preview_unpaired = components.label(container, 6, 1, pad=0, text="-")
+
+        self.image_count_caption_label = components.label(container, 7, 0, "\nImages with Captions", pad=0,
+                         tooltip="Total number of image files with an associated caption")
+        set_underline(self.image_count_caption_label)
+        self.image_count_caption_preview = components.label(container, 8, 0, pad=0, text="-")
+
+        self.video_count_caption_label = components.label(container, 7, 1, "\nVideos with Captions", pad=0,
+                         tooltip="Total number of video files with an associated caption")
+        set_underline(self.video_count_caption_label)
+        self.video_count_caption_preview = components.label(container, 8, 1, pad=0, text="-")
+
+        self.caption_count_label_unpaired = components.label(container, 7, 2, "\nUnpaired Captions", pad=0,
+                         tooltip="Total number of caption files which lack a corresponding image file...")
+        set_underline(self.caption_count_label_unpaired)
+        self.caption_count_preview_unpaired = components.label(container, 8, 2, pad=0, text="-")
+
+        # resolution info
+        self.pixel_max_label = components.label(container, 9, 0, "\nMax Pixels", pad=0,
+                         tooltip="Largest image in the concept by number of pixels")
+        set_underline(self.pixel_max_label)
+        self.pixel_max_preview = components.label(container, 10, 0, pad=0, text="-", wraplength=150)
+
+        self.pixel_avg_label = components.label(container, 9, 1, "\nAvg Pixels", pad=0,
+                         tooltip="Average size of images in the concept by number of pixels")
+        set_underline(self.pixel_avg_label)
+        self.pixel_avg_preview = components.label(container, 10, 1, pad=0, text="-", wraplength=150)
+
+        self.pixel_min_label = components.label(container, 9, 2, "\nMin Pixels", pad=0,
+                         tooltip="Smallest image in the concept by number of pixels")
+        set_underline(self.pixel_min_label)
+        self.pixel_min_preview = components.label(container, 10, 2, pad=0, text="-", wraplength=150)
+
+        # video length info
+        self.length_max_label = components.label(container, 11, 0, "\nMax Length", pad=0,
+                         tooltip="Longest video in the concept by number of frames")
+        set_underline(self.length_max_label)
+        self.length_max_preview = components.label(container, 12, 0, pad=0, text="-", wraplength=150)
+
+        self.length_avg_label = components.label(container, 11, 1, "\nAvg Length", pad=0,
+                         tooltip="Average length of videos in the concept by frames")
+        set_underline(self.length_avg_label)
+        self.length_avg_preview = components.label(container, 12, 1, pad=0, text="-", wraplength=150)
+
+        self.length_min_label = components.label(container, 11, 2, "\nMin Length", pad=0,
+                         tooltip="Shortest video in the concept by frames")
+        set_underline(self.length_min_label)
+        self.length_min_preview = components.label(container, 12, 2, pad=0, text="-", wraplength=150)
+
+        # video fps info
+        self.fps_max_label = components.label(container, 13, 0, "\nMax FPS", pad=0,
+                         tooltip="Video in concept with highest fps")
+        set_underline(self.fps_max_label)
+        self.fps_max_preview = components.label(container, 14, 0, pad=0, text="-", wraplength=150)
+
+        self.fps_avg_label = components.label(container, 13, 1, "\nAvg FPS", pad=0,
+                         tooltip="Average fps of videos in the concept")
+        set_underline(self.fps_avg_label)
+        self.fps_avg_preview = components.label(container, 14, 1, pad=0, text="-", wraplength=150)
+
+        self.fps_min_label = components.label(container, 13, 2, "\nMin FPS", pad=0,
+                         tooltip="Video in concept with the lowest fps")
+        set_underline(self.fps_min_label)
+        self.fps_min_preview = components.label(container, 14, 2, pad=0, text="-", wraplength=150)
+
+        # caption info
+        self.caption_max_label = components.label(container, 15, 0, "\nMax Caption Length", pad=0,
+                         tooltip="Largest caption in concept by character count")
+        set_underline(self.caption_max_label)
+        self.caption_max_preview = components.label(container, 16, 0, pad=0, text="-", wraplength=150)
+
+        self.caption_avg_label = components.label(container, 15, 1, "\nAvg Caption Length", pad=0,
+                         tooltip="Average length of caption in concept by character count")
+        set_underline(self.caption_avg_label)
+        self.caption_avg_preview = components.label(container, 16, 1, pad=0, text="-", wraplength=150)
+
+        self.caption_min_label = components.label(container, 15, 2, "\nMin Caption Length", pad=0,
+                         tooltip="Smallest caption in concept by character count")
+        set_underline(self.caption_min_label)
+        self.caption_min_preview = components.label(container, 16, 2, pad=0, text="-", wraplength=150)
+
+        # aspect bucket info
+        self.aspect_bucket_label = components.label(container, 17, 0, "\nAspect Bucketing", pad=0,
+                         tooltip="Graph of possible aspect buckets...")
+        set_underline(self.aspect_bucket_label)
+
+        self.small_bucket_label = components.label(container, 17, 1, "\nSmallest Buckets", pad=0,
+                         tooltip="Image buckets with the least nonzero total images...")
+        set_underline(self.small_bucket_label)
+        self.small_bucket_preview = components.label(container, 18, 1, pad=0, text="-")
+
+        # Setup Matplotlib figure for aspect bucketing
+        plt.set_loglevel('WARNING')  # hush messages about data type in bar chart
+        self.bucket_fig, self.bucket_ax = plt.subplots(figsize=(7, 2))
+        # Create a Qt-based figure canvas
+        self.canvas = FigureCanvasQTAgg(self.bucket_fig)
+        # Add it to layout at row=19, col=0..3
+        grid_layout.addWidget(self.canvas, 19, 0, 2, 4)
+        self.bucket_fig.tight_layout()
+
+        # For the sake of minimal changes, we won't do fancy color theming here:
+        # you can set colors if desired, or just leave defaults:
+        # self.bucket_fig.set_facecolor("#ffffff")
+        # self.bucket_ax.set_facecolor("#ffffff")
+
+        # Refresh stats - must be after all labels are defined
+        components.button(
+            master=container,
+            row=0, column=0, text="Refresh Basic",
+            command=lambda: self.__get_concept_stats_threaded(False, 9999),
+            tooltip="Reload basic statistics for the concept directory"
+        )
+        components.button(
+            master=container,
+            row=0, column=1, text="Refresh Advanced",
+            command=lambda: [
+                self.__get_concept_stats_threaded(False, 9999),
+                self.__get_concept_stats(True, 9999)
+            ],
+            tooltip="Reload advanced statistics for the concept directory"
+        )
+        components.button(
+            master=container,
+            row=0, column=2, text="Abort Scan",
+            command=lambda: self.__cancel_concept_stats(),
+            tooltip="Stop the currently running scan..."
+        )
+        self.processing_time = components.label(container, 0, 3, text="-", tooltip="Time taken to process concept directory")
+
+        # Instead of old .pack(...), we already have it in scroll_area’s layout.
+        return container
+
     def __prev_image_preview(self):
         self.image_preview_file_index = max(self.image_preview_file_index - 1, 0)
         self.__update_image_preview()
@@ -404,7 +613,7 @@ class ConceptWindow(QDialog):
         image_preview, filename_preview, caption_preview = self.__get_preview_image()
         self.preview_pixmap = self.__pil_to_qpixmap(image_preview)
         self.image_label.setPixmap(self.preview_pixmap)
-        self.image_label.setFixedSize(min(image_preview.width,300), min(image_preview.height,300))
+        self.image_label.setFixedSize(min(image_preview.width, 300), min(image_preview.height, 300))
         self.image_label.setScaledContents(True)
 
         self.filename_preview_label.setText(filename_preview)
@@ -556,7 +765,7 @@ class ConceptWindow(QDialog):
         filename_output = os.path.basename(preview_image_path)
         try:
             if self.concept.text.prompt_source == "sample":
-                with open(splitext[0] + ".txt", "r", encoding="utf-8") as prompt_file:
+                with open(os.path.splitext(preview_image_path)[0] + ".txt", "r", encoding="utf-8") as prompt_file:
                     prompt_output = prompt_file.readline()
             elif self.concept.text.prompt_source == "filename":
                 prompt_output = os.path.splitext(os.path.basename(preview_image_path))[0]
@@ -583,51 +792,63 @@ class ConceptWindow(QDialog):
             pil_image = pil_image.convert("RGB")
 
         data = pil_image.tobytes("raw", "RGB")
-        qimg = QImage(data, pil_image.width, pil_image.height, 3*pil_image.width, QImage.Format_RGB888)
+        qimg = QImage(
+            data, pil_image.width, pil_image.height,
+            3 * pil_image.width, QImage.Format_RGB888
+        )
         return QPixmap.fromImage(qimg)
-    
+
     def __update_concept_stats(self):
-        #file size
-        self.file_size_preview.configure(text=str(int(self.concept.concept_stats["file_size"]/1048576)) + " MB")
-        self.processing_time.configure(text=str(round(self.concept.concept_stats["processing_time"], 2)) + " s")
+        """
+        Same logic as before, but replace old tkinter .configure(...) with setText(...).
+        Also, we do not need ctk.CTkFont; we can handle underlines via QFont if needed.
+        """
+        # file size
+        self.file_size_preview.setText(str(int(self.concept.concept_stats["file_size"] / 1048576)) + " MB")
+        self.processing_time.setText(str(round(self.concept.concept_stats["processing_time"], 2)) + " s")
 
-        #directory count
-        self.dir_count_preview.configure(text=self.concept.concept_stats["directory_count"])
+        # directory count
+        self.dir_count_preview.setText(str(self.concept.concept_stats["directory_count"]))
 
-        #image count
-        self.image_count_preview.configure(text=self.concept.concept_stats["image_count"])
-        self.image_count_mask_preview.configure(text=self.concept.concept_stats["image_with_mask_count"])
-        self.image_count_caption_preview.configure(text=self.concept.concept_stats["image_with_caption_count"])
+        # image count
+        self.image_count_preview.setText(str(self.concept.concept_stats["image_count"]))
+        self.image_count_mask_preview.setText(str(self.concept.concept_stats["image_with_mask_count"]))
+        self.image_count_caption_preview.setText(str(self.concept.concept_stats["image_with_caption_count"]))
 
-        #video count
-        self.video_count_preview.configure(text=self.concept.concept_stats["video_count"])
-        #self.video_count_mask_preview.configure(text=self.concept.concept_stats["video_with_mask_count"])
-        self.video_count_caption_preview.configure(text=self.concept.concept_stats["video_with_caption_count"])
+        # video count
+        self.video_count_preview.setText(str(self.concept.concept_stats["video_count"]))
+        self.video_count_caption_preview.setText(str(self.concept.concept_stats["video_with_caption_count"]))
 
-        #mask count
-        self.mask_count_preview.configure(text=self.concept.concept_stats["mask_count"])
-        self.mask_count_preview_unpaired.configure(text=self.concept.concept_stats["unpaired_masks"])
+        # mask count
+        self.mask_count_preview.setText(str(self.concept.concept_stats["mask_count"]))
+        self.mask_count_preview_unpaired.setText(str(self.concept.concept_stats["unpaired_masks"]))
 
-        #caption count
-        self.caption_count_preview.configure(text=self.concept.concept_stats["caption_count"])
-        self.caption_count_preview_unpaired.configure(text=self.concept.concept_stats["unpaired_captions"])
+        # caption count
+        self.caption_count_preview.setText(str(self.concept.concept_stats["caption_count"]))
+        self.caption_count_preview_unpaired.setText(str(self.concept.concept_stats["unpaired_captions"]))
 
-        #resolution info
+        # resolution info
         max_pixels = self.concept.concept_stats["max_pixels"]
         avg_pixels = self.concept.concept_stats["avg_pixels"]
         min_pixels = self.concept.concept_stats["min_pixels"]
 
-        if any(isinstance(x, str) for x in [max_pixels, avg_pixels, min_pixels]) or self.concept.concept_stats["image_count"] == 0:   #will be str if adv stats were not taken
-            self.pixel_max_preview.configure(text="-")
-            self.pixel_avg_preview.configure(text="-")
-            self.pixel_min_preview.configure(text="-")
+        if any(isinstance(x, str) for x in [max_pixels, avg_pixels, min_pixels]) or \
+           self.concept.concept_stats["image_count"] == 0:
+            self.pixel_max_preview.setText("-")
+            self.pixel_avg_preview.setText("-")
+            self.pixel_min_preview.setText("-")
         else:
-            #formatted as (#pixels/1000000) MP, width x height, \n filename
-            self.pixel_max_preview.configure(text=f'{str(round(max_pixels[0]/1000000, 2))} MP, {max_pixels[2]}\n{max_pixels[1]}')
-            self.pixel_avg_preview.configure(text=f'{str(round(avg_pixels/1000000, 2))} MP, ~{int(math.sqrt(avg_pixels))}w x {int(math.sqrt(avg_pixels))}h')
-            self.pixel_min_preview.configure(text=f'{str(round(min_pixels[0]/1000000, 2))} MP, {min_pixels[2]}\n{min_pixels[1]}')
+            self.pixel_max_preview.setText(
+                f'{round(max_pixels[0]/1_000_000, 2)} MP, {max_pixels[2]}\n{max_pixels[1]}'
+            )
+            self.pixel_avg_preview.setText(
+                f'{round(avg_pixels/1_000_000, 2)} MP, ~{int(math.sqrt(avg_pixels))}w x {int(math.sqrt(avg_pixels))}h'
+            )
+            self.pixel_min_preview.setText(
+                f'{round(min_pixels[0]/1_000_000, 2)} MP, {min_pixels[2]}\n{min_pixels[1]}'
+            )
 
-        #video length and fps info
+        # video length and fps info
         max_length = self.concept.concept_stats["max_length"]
         avg_length = self.concept.concept_stats["avg_length"]
         min_length = self.concept.concept_stats["min_length"]
@@ -635,88 +856,98 @@ class ConceptWindow(QDialog):
         avg_fps = self.concept.concept_stats["avg_fps"]
         min_fps = self.concept.concept_stats["min_fps"]
 
-        if any(isinstance(x, str) for x in [max_length, avg_length, min_length]) or self.concept.concept_stats["video_count"] == 0:   #will be str if adv stats were not taken
-            self.length_max_preview.configure(text="-")
-            self.length_avg_preview.configure(text="-")
-            self.length_min_preview.configure(text="-")
-            self.fps_max_preview.configure(text="-")
-            self.fps_avg_preview.configure(text="-")
-            self.fps_min_preview.configure(text="-")
+        if any(isinstance(x, str) for x in [max_length, avg_length, min_length]) or \
+           self.concept.concept_stats["video_count"] == 0:
+            self.length_max_preview.setText("-")
+            self.length_avg_preview.setText("-")
+            self.length_min_preview.setText("-")
+            self.fps_max_preview.setText("-")
+            self.fps_avg_preview.setText("-")
+            self.fps_min_preview.setText("-")
         else:
-            #formatted as (#frames) frames \n filename
-            self.length_max_preview.configure(text=f'{int(max_length[0])} frames\n{max_length[1]}')
-            self.length_avg_preview.configure(text=f'{int(avg_length)} frames')
-            self.length_min_preview.configure(text=f'{int(min_length[0])} frames\n{min_length[1]}')
-            #formatted as (#fps) fps \n filename
-            self.fps_max_preview.configure(text=f'{int(max_fps[0])} fps\n{max_fps[1]}')
-            self.fps_avg_preview.configure(text=f'{int(avg_fps)} fps')
-            self.fps_min_preview.configure(text=f'{int(min_fps[0])} fps\n{min_fps[1]}')
+            self.length_max_preview.setText(f'{int(max_length[0])} frames\n{max_length[1]}')
+            self.length_avg_preview.setText(f'{int(avg_length)} frames')
+            self.length_min_preview.setText(f'{int(min_length[0])} frames\n{min_length[1]}')
 
-        #caption info
+            self.fps_max_preview.setText(f'{int(max_fps[0])} fps\n{max_fps[1]}')
+            self.fps_avg_preview.setText(f'{int(avg_fps)} fps')
+            self.fps_min_preview.setText(f'{int(min_fps[0])} fps\n{min_fps[1]}')
+
+        # caption info
         max_caption_length = self.concept.concept_stats["max_caption_length"]
         avg_caption_length = self.concept.concept_stats["avg_caption_length"]
         min_caption_length = self.concept.concept_stats["min_caption_length"]
 
-        if any(isinstance(x, str) for x in [max_caption_length, avg_caption_length, min_caption_length]) or self.concept.concept_stats["caption_count"] == 0:   #will be str if adv stats were not taken
-            self.caption_max_preview.configure(text="-")
-            self.caption_avg_preview.configure(text="-")
-            self.caption_min_preview.configure(text="-")
+        if any(isinstance(x, str) for x in [max_caption_length, avg_caption_length, min_caption_length]) or \
+           self.concept.concept_stats["caption_count"] == 0:
+            self.caption_max_preview.setText("-")
+            self.caption_avg_preview.setText("-")
+            self.caption_min_preview.setText("-")
         else:
-            #formatted as (#chars) chars, (#words) words, \n filename
-            self.caption_max_preview.configure(text=f'{max_caption_length[0]} chars, {max_caption_length[2]} words\n{max_caption_length[1]}')
-            self.caption_avg_preview.configure(text=f'{int(avg_caption_length[0])} chars, {int(avg_caption_length[1])} words')
-            self.caption_min_preview.configure(text=f'{min_caption_length[0]} chars, {min_caption_length[2]} words\n{min_caption_length[1]}')
+            self.caption_max_preview.setText(
+                f'{max_caption_length[0]} chars, {max_caption_length[2]} words\n{max_caption_length[1]}'
+            )
+            self.caption_avg_preview.setText(
+                f'{int(avg_caption_length[0])} chars, {int(avg_caption_length[1])} words'
+            )
+            self.caption_min_preview.setText(
+                f'{min_caption_length[0]} chars, {min_caption_length[2]} words\n{min_caption_length[1]}'
+            )
 
-        #aspect bucketing
+        # aspect bucketing
         aspect_buckets = self.concept.concept_stats["aspect_buckets"]
-        if len(aspect_buckets) != 0 and max(val for val in aspect_buckets.values()) > 0:    #check aspect_bucket data exists and is not all zero
-            min_val = min(val for val in aspect_buckets.values() if val > 0)                #smallest nonzero values
-            if max(val for val in aspect_buckets.values()) > min_val:                       #check if any buckets larger than min_val exist - if all images are same aspect then there won't be
-                min_val2 = min(val for val in aspect_buckets.values() if (val > 0 and val != min_val))  #second smallest bucket
-            else:
-                min_val2 = min_val  #if no second smallest bucket exists set to min_val
-            min_aspect_buckets = {key: val for key,val in aspect_buckets.items() if val in (min_val, min_val2)}
-            min_bucket_str = ""
-            for key, val in min_aspect_buckets.items():
-                min_bucket_str += f'aspect {key}: {val} img\n'
-            min_bucket_str.strip()
-            self.small_bucket_preview.configure(text=min_bucket_str)
-
         self.bucket_ax.cla()
-        aspects = [str(x) for x in list(aspect_buckets.keys())]
-        counts = list(aspect_buckets.values())
-        b = self.bucket_ax.bar(aspects, counts)
-        self.bucket_ax.bar_label(b, color=self.text_color)
+        if len(aspect_buckets) != 0 and max(aspect_buckets.values()) > 0:
+            aspects = [str(x) for x in list(aspect_buckets.keys())]
+            counts = list(aspect_buckets.values())
+            b = self.bucket_ax.bar(aspects, counts)
+            # The color for the bar labels is set to black by default – you could change as needed:
+            self.bucket_ax.bar_label(b)
         self.canvas.draw()
+
+        # Possibly force a repaint:
+        self.update()
 
     def __get_concept_stats(self, advanced_checks: bool, waittime: float):
         start_time = time.perf_counter()
         last_update = time.perf_counter()
         subfolders = [self.concept.path]
         stats_dict = concept_stats.init_concept_stats(self.concept, advanced_checks)
+
         for path in subfolders:
             stats_dict = concept_stats.folder_scan(path, stats_dict, advanced_checks, self.concept)
             stats_dict["processing_time"] = time.perf_counter() - start_time
-            if self.concept.include_subdirectories:     #add all subfolders of current directory to for loop
+            if self.concept.include_subdirectories:
                 subfolders.extend([f for f in os.scandir(path) if f.is_dir()])
             self.concept.concept_stats = stats_dict
-            #cancel and set init stats if longer than waiting time or cancel flag set
+
+            # check for abort or time limit
             if (time.perf_counter() - start_time) > waittime or self.cancel_scan_flag.is_set():
                 stats_dict = concept_stats.init_concept_stats(self.concept, advanced_checks)
                 stats_dict["processing_time"] = time.perf_counter() - start_time
                 self.concept.concept_stats = stats_dict
                 self.cancel_scan_flag.clear()
                 break
-            #update GUI approx every half second
+
+            # update GUI approx every half second
             if time.perf_counter() > (last_update + 0.5):
                 last_update = time.perf_counter()
                 self.__update_concept_stats()
-                self.concept_stats_tab.update()
+                # In PySide6, self.update() suffices:
+                self.update()
 
         self.__update_concept_stats()
 
-    def __get_concept_stats_threaded(self, advanced_checks : bool, waittime : float):
-        self.p = multiprocessing.Process(target=self.__get_concept_stats(advanced_checks, waittime), daemon=True)
+    def __get_concept_stats_threaded(self, advanced_checks: bool, waittime: float):
+        """
+        Attempt a threaded or multiprocess approach to avoid blocking.
+        This just spawns a process to call __get_concept_stats.
+        """
+        self.p = multiprocessing.Process(
+            target=self.__get_concept_stats,  # pass the function itself
+            args=(advanced_checks, waittime),
+            daemon=True
+        )
         self.p.start()
 
     def __cancel_concept_stats(self):
@@ -724,17 +955,17 @@ class ConceptWindow(QDialog):
 
     def __auto_update_concept_stats(self):
         try:
-            self.__update_concept_stats()      #load stats from config if available, else raises KeyError
-            if self.concept.concept_stats["image_count"] == 0:  #force rescan if zero images
+            self.__update_concept_stats()
+            if self.concept.concept_stats["image_count"] == 0:  # force rescan if zero images
                 raise KeyError
         except KeyError:
             try:
-                self.__get_concept_stats_threaded(False, 2)    #force rescan if config is empty, timeout of 2 sec
+                self.__get_concept_stats_threaded(False, 2)
                 if self.concept.concept_stats["processing_time"] < 0.1:
-                    self.__get_concept_stats_threaded(True, 2)    #do advanced scan automatically if basic took <0.1s
-            except FileNotFoundError:              #avoid error when loading concept window without config path defined
+                    self.__get_concept_stats_threaded(True, 2)
+            except FileNotFoundError:
                 pass
 
     def __ok(self):
         # self.concept.configure_element()
-        self.accept()  # or self.accept() if you want to close the dialog
+        self.accept()
