@@ -257,20 +257,3 @@ class SampleWindow(QDialog):
                 on_sample=self.__update_preview,
                 on_update_progress=self.__update_progress
             )
-
-    def destroy(self):
-        """Safely destroy the window"""
-        try:
-            # Clear icon reference before destruction
-            if hasattr(self, "_icon_image_ref"):
-                del self._icon_image_ref
-
-            # Remove any pending after callbacks
-            for after_id in self.tk.call('after', 'info'):
-                with contextlib.suppress(Exception):
-                    self.after_cancel(after_id)
-
-            # Call parent destroy
-            super().destroy()
-        except Exception as e:
-            print(f"Error destroying window: {e}")
