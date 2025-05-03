@@ -53,24 +53,20 @@ class CaptionUI(QMainWindow):
 
         # Note: this size MUST be smaller than screen size or very bad things happen.
         self.image_size = 650
-        self.help_text = (
-            "Keyboard shortcuts when focusing on the prompt input field:\n"
-            "Up arrow: previous image\n"
-            "Down arrow: next image\n"
-            "Return: save\n"
-            "Ctrl+M: only show the mask\n"
-            "Ctrl+D: draw mask editing mode\n"
-            "Ctrl+F: fill mask editing mode\n\n"
-            "When editing masks:\n"
-            "Left click: add mask\n"
-            "Right click: remove mask\n"
-            "Mouse wheel: increase or decrease brush size"
-        )
+        self.help_text = """
+        Keyboard shortcuts when focusing on the prompt input field:
+        Up arrow: previous image
+        Down arrow: next image
+        Return: save
+        Ctrl+M: only show the mask
+        Ctrl+D: draw mask editing mode
+        Ctrl+F: fill mask editing mode
+        
+        When editing masks:
+        Left click: add mask
+        Right click: remove mask
+        Mouse wheel: increase or decrease brush size"""
 
-    When editing masks:
-    Left click: add mask
-    Right click: remove mask
-    Mouse wheel: increase or decrease brush size"""
         self.masking_model = None
 
         self.image_rel_paths = []
